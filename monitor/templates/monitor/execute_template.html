@@ -9,7 +9,13 @@
 <form method="post">
     {% csrf_token %}
     <p>{{ template.description }}</p>
-
+    {% if errors %}
+    <ul class="errors">
+        {% for name, message in errors.items %}
+        <li>{{ name }}: {{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     {% for param in parameters %}
     <div class="mb-3">
         <label for="{{ param }}" class="form-label">{{ param }}</label>

@@ -3,6 +3,7 @@ from .models import NetworkDevice, Connection, NetworkInterface
 from .forms import DeviceFilterForm
 from .ssh_manager import execute_ssh_command
 from .command_templates import command_templates
+from .command_builder import build_command, extract_parameters
 from django.http import JsonResponse
 from .network_scanner_1 import scan_full_network, determine_device_type
 import ipaddress
@@ -160,38 +161,32 @@ def ssh_command_view(request, pk):
         "result": result
     })
 
+
 @login_required
 def execute_template_view(request, pk):
-    """
-    Представление для выполнения команд по шаблону.
-    """
+    """Выполнение команды по шаблону с проверкой параметров."""
     device = get_object_or_404(NetworkDevice, pk=pk)
     result = None
+    errors = {}
     template_name = request.GET.get("template", None)
     template = command_templates.get(template_name, None)
-    parameters = []
-    if template:
-        command = template["command"]
-        parameters = [param.split("}")[0] for param in command.split("{")[1:]]
+    parameters = extract_parameters(template["command"]) if template else []
 
-    if request.method == "POST" and template_name in command_templates:
-        # Получаем параметры из POST-запроса
-        input_parameters = {key: request.POST.get(key) for key in request.POST if key != "csrfmiddlewaretoken"}
-        command = template["command"].format(**input_parameters)
-
-        # Выполняем команду через SSH
-
-        result = execute_ssh_command(
-            host=device.ip_address,
-            username=device.ssh_username,
-            command=command,
-            private_key_path="/root/.ssh/id_rsa"
-        )
+    if request.method == "POST" and template:
+        command, errors = build_command(template["command"], request.POST)
+        if command:
+            result = execute_ssh_command(
+                host=device.ip_address,
+                username=device.ssh_username,
+                command=command,
+                private_key_path="/root/.ssh/id_rsa"
+            )
     return render(request, "monitor/execute_template.html", {
         "device": device,
         "template_name": template_name,
         "template": template,
         "parameters": parameters,
+        "errors": errors,
         "result": result
     })
 

@@ -3,11 +3,12 @@ import io
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 
 from monitor.models import Connection, NetworkDevice, NetworkInterface
-
+from monitor.command_builder import VALIDATORS, build_command, extract_parameters
+from monitor.command_templates import command_templates
 
 class NetworkDeviceTests(TestCase):
     def setUp(self):
@@ -131,3 +132,91 @@ class ProtectedEndpointsTests(TestCase):
         )
         self.assertEqual(response.status_code, 302)
         mocked_scan.assert_not_called()
+
+class CommandBuilderTests(SimpleTestCase):
+    def test_valid_change_ip(self):
+        command, errors = build_command(
+            command_templates["change_ip"]["command"],
+            {"ip": "10.0.0.2", "mask": "24", "interface": "eth0", "old_ip": "10.0.0.1"},
+        )
+        self.assertEqual(errors, {})
+        self.assertEqual(
+            command,
+            "ip addr add 10.0.0.2/24 dev eth0 && ip addr del 10.0.0.1/24 dev eth0",
+        )
+
+    def test_command_injection_is_rejected(self):
+        command, errors = build_command(
+            command_templates["sudo_no_auth"]["command"],
+            {"username": "x' ; rm -rf / ; echo '"},
+        )
+        self.assertIsNone(command)
+        self.assertIn("username", errors)
+
+    def test_password_is_shell_quoted(self):
+        command, errors = build_command(
+            command_templates["create_user"]["command"],
+            {"uid": "1001", "password": "a b; reboot", "username": "alice"},
+        )
+        self.assertEqual(errors, {})
+        self.assertIn("'a b; reboot'", command)
+
+    def test_uid_zero_is_rejected(self):
+        _, errors = build_command(
+            command_templates["create_user"]["command"],
+            {"uid": "0", "password": "x", "username": "alice"},
+        )
+        self.assertIn("uid", errors)
+
+    def test_missing_parameter_is_rejected(self):
+        command, errors = build_command(command_templates["set_timezone"]["command"], {})
+        self.assertIsNone(command)
+        self.assertIn("timezone", errors)
+
+    def test_every_template_parameter_has_validator(self):
+        for name, template in command_templates.items():
+            for param in extract_parameters(template["command"]):
+                self.assertIn(param, VALIDATORS, f"{name}: {param}")
+
+    def test_dhcp_template_keeps_literal_braces(self):
+        template = command_templates["configure_dhcp"]["command"]
+        self.assertEqual(
+            extract_parameters(template),
+            ["subnet", "netmask", "range_start", "range_end", "gateway", "dns_server"],
+        )
+        command, errors = build_command(template, {
+            "subnet": "10.0.0.0", "netmask": "255.255.255.0",
+            "range_start": "10.0.0.10", "range_end": "10.0.0.20",
+            "gateway": "10.0.0.1", "dns_server": "8.8.8.8",
+        })
+        self.assertEqual(errors, {})
+        self.assertIn(
+            "{ range 10.0.0.10 10.0.0.20; option routers 10.0.0.1; "
+            "option domain-name-servers 8.8.8.8; }",
+            command,
+        )
+
+
+class ExecuteTemplateViewTests(TestCase):
+    def setUp(self):
+        user = User.objects.create_user("tester", password="StrongPass123")
+        self.client.force_login(user)
+        self.device = NetworkDevice.objects.create(name="HQ-SRV", device_type="server")
+        NetworkInterface.objects.create(
+            device=self.device, interface_name="eth0",
+            mac_address="aa:bb:cc:dd:ee:ff", ip_address="10.0.0.5",
+        )
+        self.url = reverse("execute_template", args=[self.device.pk]) + "?template=sudo_no_auth"
+
+    @patch("monitor.views.execute_ssh_command")
+    def test_invalid_parameter_does_not_reach_ssh(self, mocked):
+        response = self.client.post(self.url, {"username": "x'; id; '"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("username", response.context["errors"])
+        mocked.assert_not_called()
+
+    @patch("monitor.views.execute_ssh_command", return_value="ok")
+    def test_valid_parameter_runs_command(self, mocked):
+        self.client.post(self.url, {"username": "alice"})
+        mocked.assert_called_once()
+        self.assertIn("alice", mocked.call_args.kwargs["command"])
