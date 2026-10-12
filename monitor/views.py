@@ -65,11 +65,13 @@ def get_topology_data(devices=None):
 
     return {"nodes": nodes, "edges": edges}
 
+@login_required
 def network_topology_data(request):
     """ Отдаёт JSON-данные для визуализации сети в Cytoscape.js. """
     topology_data = get_topology_data()
     return JsonResponse(topology_data)
 
+@login_required
 def network_topology_view(request):
     """ Представление для отображения графической топологии. """
     return render(request, 'monitor/network_topology.html')
@@ -193,7 +195,7 @@ def execute_template_view(request, pk):
         "result": result
     })
 
-
+@login_required
 def start_scan(request):
     """Запуск сканирования и переход на страницу прогресса."""
     global scan_in_progress
@@ -229,7 +231,7 @@ def scan_progress(request):
     """Показывает страницу прогресса сканирования."""
     return render(request, "monitor/scan_progress.html")
 
-
+@login_required
 def scan_status(request):
     """Проверяет состояние сканирования."""
     global scan_in_progress

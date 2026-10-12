@@ -109,3 +109,25 @@ class SshCommandViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(mocked.call_args.kwargs["host"], "10.0.0.5")
+
+class ProtectedEndpointsTests(TestCase):
+    def test_endpoints_redirect_anonymous_users(self):
+        for name in ["network_topology_data", "network_topology", "scan_status"]:
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 302)
+
+    @patch("monitor.views.scan_full_network")
+    def test_anonymous_cannot_start_scan(self, mocked_scan):
+        response = self.client.post(
+            reverse("start_scan"),
+            {
+                "start_ip": "10.0.0.1",
+                "server_type": "srv",
+                "router_type": "rtr",
+                "switch_type": "sw",
+                "client_type": "cli",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        mocked_scan.assert_not_called()
