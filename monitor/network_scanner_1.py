@@ -1,34 +1,24 @@
 import os
-import subprocess
-import paramiko
-from queue import Queue
-from monitor.models import NetworkDevice, NetworkInterface, Connection, MacConnection
 import re
+from queue import Queue
+
+from monitor.models import NetworkDevice, NetworkInterface, Connection, MacConnection
+from monitor.ssh_manager import connect_client
 
 SSH_USERNAME = os.environ.get("NETPULSE_SSH_USER", "root")
 SSH_PASSWORD = os.environ.get("NETPULSE_SSH_PASSWORD", "")
 
-client = paramiko.SSHClient()
+
+def _run(client, command):
+    """Выполняет команду на устройстве и возвращает её вывод."""
+    _stdin, stdout, _stderr = client.exec_command(command, timeout=10)
+    return stdout.read().decode()
 
 
-def connect_via_ssh(ip):
-
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(ip, username=SSH_USERNAME, password=SSH_PASSWORD, timeout=5)
-
-
-def disconnect_from_ssh():
-    client.close()
-
-
-def get_hostname_via_ssh():
+def get_hostname_via_ssh(client):
     try:
-
-        stdin, stdout, stderr = client.exec_command("hostname")
-        hostname = stdout.read().decode().strip()
-
+        hostname = _run(client, "hostname").strip()
         return hostname if hostname else "Unknown"
-
     except Exception as e:
         print(f"⚠️ Ошибка команды hostname: {e}")
         return "Unknown"
@@ -49,50 +39,48 @@ def determine_device_type(hostname, server_type, router_type, switch_type, clien
     return "unknown"
 
 
-def get_interfaces_via_ssh():
-    current_interface = ''
-    mac = ''
+def get_interfaces_via_ssh(client):
+    current_interface = ""
+    mac = ""
     interfaces = []
 
     try:
-
-        stdin, stdout, stderr = client.exec_command("ip a")
-        output_ip_a = stdout.read().decode().strip()
+        output_ip_a = _run(client, "ip a").strip()
 
         for line in output_ip_a.split("\n"):
-            if re.match(r"\d+: (\S+):", line):  # Найден новый интерфейс
-                current_interface = str(re.match(r"\d+: ([^@:]+)", line).group(1))
+            header = re.match(r"\d+: ([^@:]+)", line)
+            if header:  # Найден новый интерфейс
+                current_interface = header.group(1)
+                mac = ""
             elif "link/ether" in line and current_interface:
-                mac = re.search(r"link/ether ([\da-fA-F:]+)", line).group(1)
+                mac_match = re.search(r"link/ether ([\da-fA-F:]+)", line)
+                if mac_match:
+                    mac = mac_match.group(1)
             elif "inet " in line and current_interface:  # Найден IP-адрес
                 match = re.search(r"inet (\d+\.\d+\.\d+\.\d+)/\d+", line)
                 if match:
-                    ip_addr = match.group(1)
-                    interfaces.append({"interface": current_interface, "ip": ip_addr, "mac": mac})
-
-        print(interfaces)
-        return interfaces
+                    interfaces.append({"interface": current_interface, "ip": match.group(1), "mac": mac})
     except Exception as e:
         print(f"⚠️ Ошибка команды 'ip a': {e}")
-    return "Unknown"
+        return []
+
+    print(interfaces)
+    return interfaces
 
 
-def get_arp_via_ssh():
+def get_arp_via_ssh(client):
     neighbors = []
 
     try:
-        stdin, stdout, stderr = client.exec_command("arp -a")
-        output_arp = stdout.read().decode()
-
+        output_arp = _run(client, "arp -a")
         print(f"📋 Вывод arp -a:\n{output_arp}")
 
         # Разбираем вывод arp -a
         for line in output_arp.split("\n"):
             match = re.search(r"(\S+) \(([\d.]+)\) at ([\w:<>]+) \[.*\] on (\S+)", line)
             if match:
-                neighbor_hostname, neighbor_ip, neighbor_mac, neighbor_interface = match.groups()
+                _neighbor_hostname, neighbor_ip, neighbor_mac, neighbor_interface = match.groups()
 
-                #TODO для чего?
                 # Пропускаем, если MAC-адрес отсутствует (<incomplete>)
                 if neighbor_mac == "<incomplete>":
                     continue
@@ -110,10 +98,10 @@ def get_arp_via_ssh():
 
 
 def add_to_db_device(hostname, device_type):
-    """ Добавляет устройство в БД, если его там еще нет, и записывает интерфейсы. """
+    """ Добавляет устройство в БД, если его там еще нет. """
     NetworkDevice.objects.get_or_create(
         name=hostname,
-        defaults={"device_type": device_type, "status": "unknown", "ssh_username": "root"}
+        defaults={"device_type": device_type, "status": "online", "ssh_username": "root"}
     )
 
 
@@ -137,17 +125,18 @@ def add_to_db_interface(ip, mac, name_device, interface_name):
 
 def add_to_db_connection(source_device_name, source_int, target_mac):
     """ Добавляет связь между двумя устройствами, если они напрямую связаны (по MAC). """
-
-    #TODO сделать обработку None
     source_device_id = get_device_id(source_device_name)
+    if source_device_id is None:
+        return
 
-    # TODO сделать обработку None
     source_mac = get_mac_via_int(source_device_id, source_int)
+    if not source_mac:
+        return
 
     if not MacConnection.objects.filter(mac_address_device_1=f"{source_mac}", mac_address_device_2=f"{target_mac}").exists():
         if not MacConnection.objects.filter(mac_address_device_2=f"{source_mac}", mac_address_device_1=f"{target_mac}").exists():
             MacConnection.objects.create(mac_address_device_1=f"{source_mac}", mac_address_device_2=f"{target_mac}")
-            print (f"🔗 Добавлена связь: {source_mac} → {target_mac}")
+            print(f"🔗 Добавлена связь: {source_mac} → {target_mac}")
             return
     print(f"⚠️ Связь {source_mac} → {target_mac} уже существует")
 
@@ -177,29 +166,30 @@ def add_to_db_device_connections():
         else:
             print(f"⚠️ Связь {source_device} → {target_device} уже существует")
 
+
 def get_mac_via_int(device_id, device_interface):
     interface = NetworkInterface.objects.filter(device=device_id, interface_name=str(device_interface)).first()
     if interface:
         return str(interface.mac_address)
-    else:
-        print(f"Mac адрес на интерфейсе {interface.interface_name} не найден.")
-        return ""
+    print(f"⚠️ MAC-адрес интерфейса {device_interface} не найден.")
+    return ""
+
 
 def get_device_id(device_name):
     device = NetworkDevice.objects.filter(name=f"{device_name}").first()
     if device:
         return int(device.id)
-    else:
-        print(f"Устройство с именем {device_name} не найдено.")
-        return None
+    print(f"Устройство с именем {device_name} не найдено.")
+    return None
+
 
 def get_device_via_mac(mac_address):
     interface = NetworkInterface.objects.filter(mac_address=mac_address).first()
     if interface:
         return interface.device
-    else:
-        print(f"Устройство с mac адресом {mac_address} не найдено.")
-        return ""
+    print(f"Устройство с mac адресом {mac_address} не найдено.")
+    return ""
+
 
 def scan_full_network(start_ip, server_type, router_type, switch_type, client_type):
     """ Запускает полное сканирование сети с BFS. """
@@ -217,49 +207,48 @@ def scan_full_network(start_ip, server_type, router_type, switch_type, client_ty
             continue
 
         try:
-            connect_via_ssh(ip)
+            client = connect_client(ip, SSH_USERNAME, password=SSH_PASSWORD or None, timeout=5)
         except Exception as e:
-            scanned_ips.add(str(ip))
             print(f"⚠️ Ошибка подключения к {ip}: {e}")
             scanned_ips.add(str(ip))
             continue
 
-        print(f"🚀 Сканируем с устройства {ip}")
+        try:
+            print(f"🚀 Сканируем с устройства {ip}")
 
-        # Получаем имя хоста
-        current_hostname = get_hostname_via_ssh()
-        device_type = determine_device_type(current_hostname, server_type, router_type, switch_type, client_type)
-        add_to_db_device(current_hostname, device_type)
+            # Получаем имя хоста и добавляем устройство
+            current_hostname = get_hostname_via_ssh(client)
+            device_type = determine_device_type(current_hostname, server_type, router_type, switch_type, client_type)
+            add_to_db_device(current_hostname, device_type)
 
-        # Добавляем интерфейсы устройства
-        for current_interface in get_interfaces_via_ssh():
-            if current_interface["ip"] not in scanned_ips and current_interface["interface"] != "lo":
-                scanned_ips.add(str(current_interface["ip"]))
-                add_to_db_interface(
-                    current_interface["ip"],
-                    current_interface["mac"],
-                    current_hostname,
-                    current_interface["interface"]
-                )
+            # Добавляем интерфейсы устройства
+            for current_interface in get_interfaces_via_ssh(client):
+                if current_interface["ip"] not in scanned_ips and current_interface["interface"] != "lo":
+                    scanned_ips.add(str(current_interface["ip"]))
+                    add_to_db_interface(
+                        current_interface["ip"],
+                        current_interface["mac"],
+                        current_hostname,
+                        current_interface["interface"]
+                    )
 
-        # Запрашиваем соседей по SSH или через локальный ARP
-        neighbors = get_arp_via_ssh()
+            # Запрашиваем соседей через ARP-таблицу устройства
+            neighbors = get_arp_via_ssh(client)
+        finally:
+            client.close()
 
+        scanned_ips.add(str(ip))
 
         #TODO пересмотреть способ добавления соседей/связей.
         # Возможно, стоит создать отдельную таблицу чисто с названиями устройств (без сетевых адаптеров)
 
         for neighbor in neighbors:
             if neighbor["ip"] not in scanned_ips:
-
                 # Добавляем соседа в очередь для дальнейшего сканирования
                 queue.put(neighbor["ip"])
 
                 # Добавляем связь между текущим устройством и соседом
                 add_to_db_connection(current_hostname, neighbor["interface"], neighbor["mac"])
-
-            disconnect_from_ssh()
-
 
     add_to_db_device_connections()
     print("✅ Сканирование завершено!")
