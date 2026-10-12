@@ -154,7 +154,6 @@ def ssh_command_view(request, pk):
                 host=device.ip_address,
                 username=device.ssh_username,
                 command=command,
-                private_key_path="/root/.ssh/id_rsa"
             )
     return render(request, "monitor/ssh_command.html", {
         "device": device,
@@ -179,7 +178,6 @@ def execute_template_view(request, pk):
                 host=device.ip_address,
                 username=device.ssh_username,
                 command=command,
-                private_key_path="/root/.ssh/id_rsa"
             )
     return render(request, "monitor/execute_template.html", {
         "device": device,

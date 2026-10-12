@@ -1,6 +1,6 @@
 import contextlib
 import io
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth.models import User
 from django.test import SimpleTestCase, TestCase
@@ -9,6 +9,8 @@ from django.urls import reverse
 from monitor.models import Connection, NetworkDevice, NetworkInterface
 from monitor.command_builder import VALIDATORS, build_command, extract_parameters
 from monitor.command_templates import command_templates
+
+from monitor.ssh_manager import execute_ssh_command
 
 class NetworkDeviceTests(TestCase):
     def setUp(self):
@@ -220,3 +222,22 @@ class ExecuteTemplateViewTests(TestCase):
         self.client.post(self.url, {"username": "alice"})
         mocked.assert_called_once()
         self.assertIn("alice", mocked.call_args.kwargs["command"])
+
+class SshManagerTests(SimpleTestCase):
+    @patch("monitor.ssh_manager._load_client")
+    def test_uses_key_from_settings(self, mocked_load):
+        client = mocked_load.return_value
+        stdout, stderr = MagicMock(), MagicMock()
+        stdout.read.return_value = b"ok\n"
+        stderr.read.return_value = b""
+        client.exec_command.return_value = (None, stdout, stderr)
+
+        with self.settings(SSH_PRIVATE_KEY_PATH="/tmp/test_key"):
+            result = execute_ssh_command("10.0.0.5", "root", "uname -a")
+
+        self.assertEqual(result, "ok")
+        self.assertEqual(client.connect.call_args.kwargs["key_filename"], "/tmp/test_key")
+        client.close.assert_called_once()
+
+    def test_missing_host_returns_message(self):
+        self.assertIn("нет IP-адреса", execute_ssh_command(None, "root", "id"))

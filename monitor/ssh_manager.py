@@ -1,25 +1,47 @@
+import os
+
 import paramiko
+from django.conf import settings
 
-def execute_ssh_command(host, username, command, private_key_path=None):
-	try:
-		client = paramiko.SSHClient()
-		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-		if private_key_path:
-			key = paramiko.RSAKey.from_private_key_file(private_key_path)
-			client.connect(hostname=host, username=username, pkey=key)
-		else:
-			client.connect(hostname=host, username=username)
+def _load_client():
+    client = paramiko.SSHClient()
+    known_hosts = settings.SSH_KNOWN_HOSTS_FILE
+    if os.path.exists(known_hosts):
+        client.load_host_keys(known_hosts)
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    return client
 
-		stdin, stdout, stderr = client.exec_command(command)
-		output = stdout.read().decode()
-		error = stderr.read().decode()
 
-		client.close()
+def execute_ssh_command(host, username, command, private_key_path=None, timeout=10):
+    """Выполняет команду на хосте по SSH.
 
-		if error:
-			return f"Error: {error}"
-		return output.strip()
+    Ключ берётся из settings.SSH_PRIVATE_KEY_PATH. Хост-ключи запоминаются при первом
+    подключении; если ключ известного хоста изменился, подключение отклоняется.
+    """
+    if not host:
+        return "SSH Error: у устройства нет IP-адреса"
 
-	except Exception as e:
-		return f"SSH Error: {str(e)}"
+    client = _load_client()
+    try:
+        client.connect(
+            hostname=host,
+            username=username,
+            key_filename=private_key_path or settings.SSH_PRIVATE_KEY_PATH,
+            timeout=timeout,
+            look_for_keys=False,
+            allow_agent=False,
+        )
+        client.save_host_keys(settings.SSH_KNOWN_HOSTS_FILE)
+
+        _stdin, stdout, stderr = client.exec_command(command, timeout=timeout)
+        output = stdout.read().decode()
+        error = stderr.read().decode()
+
+        if error:
+            return f"Error: {error}"
+        return output.strip()
+    except Exception as e:
+        return f"SSH Error: {str(e)}"
+    finally:
+        client.close()

@@ -126,3 +126,7 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/access-denied/'
+
+# SSH-подключения к устройствам
+SSH_PRIVATE_KEY_PATH = env("SSH_PRIVATE_KEY_PATH", default=str(Path.home() / ".ssh" / "id_rsa"))
+SSH_KNOWN_HOSTS_FILE = env("SSH_KNOWN_HOSTS_FILE", default=str(BASE_DIR / "known_hosts"))
