@@ -32,11 +32,23 @@ class NetworkDevice(models.Model):
     def is_online(self):
         return self.status == "online"
 
+    @property
+    def ip_address(self):
+        """Основной IP-адрес устройства: первый интерфейс, у которого адрес задан."""
+        interface = (
+            self.networkinterface_set.filter(ip_address__isnull=False)
+            .order_by("id")
+            .first()
+        )
+        return interface.ip_address if interface else None
+
     def check_and_update_status(self):
-        """Пингует устройство и обновляет статус"""
-        from monitor.ping_check import check_ping  # Импортируем функцию пинга
-        is_alive = check_ping(self.ip_address)
-        self.status = "online" if is_alive else "offline"
+        """Пингует устройство и обновляет статус."""
+        from monitor.ping_check import check_ping
+        ip = self.ip_address
+        if not ip:
+            return
+        self.status = "online" if check_ping(ip) else "offline"
         self.save()
 
 
@@ -46,7 +58,7 @@ class Connection(models.Model):
     target = models.ForeignKey('NetworkDevice', on_delete=models.CASCADE, related_name="connections_in",
                                db_column="target_id")
 
-    def str(self):
+    def __str__(self):
         return f"{self.source.name} → {self.target.name}"
 
 class MacConnection(models.Model):
@@ -64,11 +76,7 @@ class NetworkInterface(models.Model):
     mac_address = models.CharField(max_length=17)
 
     def is_online(self):
-        interfaces = self.networkinterface_set.all()
-        for interface in interfaces:
-            if interface.ip_address:
-                return check_ping(interface.ip_address)
-        return False
+        return bool(self.ip_address) and check_ping(self.ip_address)
 
     def get_snmp_info(self):
         oid = "1.3.6.1.2.1.1.1.0"
@@ -78,15 +86,14 @@ class NetworkInterface(models.Model):
             return f"Error: {str(e)}"
 
     def __str__(self):
-        device_name = NetworkDevice.objects.get(id=f"{self.device.id}")
-        return f"{device_name.name} - ({self.ip_address})"
+        return f"{self.device.name} - ({self.ip_address})"
 
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField()
 
-    def str(self):
+    def __str__(self):
         return self.name
 
 
@@ -97,7 +104,7 @@ class Utility(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='utilities')
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def str(self):
+    def __str__(self):
         return self.title
 
 
