@@ -1,0 +1,29 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}{{ note.title }}{% endblock %}
+
+{% block content %}
+<div class="note-card">
+    <h1 class="note-title">{{ note.title }}</h1>
+    <p>{{ note.content }}</p>
+    <p class="note-meta">Автор: {{ note.author }} | {{ note.created_at }}</p>
+
+    <a href="{% url 'edit_note' note.pk %}" class="note-button edit">Редактировать</a>
+    <a href="{% url 'delete_note' note.pk %}" class="note-button delete">Удалить</a>
+</div>
+
+<h3 class="text-lg mt-6">Комментарии</h3>
+{% for comment in comments %}
+    <div class="comment-box">
+        <p>{{ comment.content }}</p>
+        <small>— {{ comment.author }}, {{ comment.created_at }}</small>
+    </div>
+{% endfor %}
+
+<h3 class="text-lg mt-6">Добавить комментарий</h3>
+<form method="post">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <button type="submit" class="note-button edit">Добавить</button>
+</form>
+{% endblock %}

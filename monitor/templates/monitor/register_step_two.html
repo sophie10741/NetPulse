@@ -1,0 +1,12 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}Регистрация: Шаг 2{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Регистрация: Шаг 2</h1>
+<form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Завершить</button>
+</form>
+{% endblock %}

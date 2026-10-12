@@ -1,0 +1,39 @@
+{% extends "monitor/base.html" %}
+
+{% block content %}
+<h2>Сканирование сети</h2>
+
+<!-- Поле для ввода IP-адреса -->
+<form method="POST" action="{% url 'scan_network' %}">
+    {% csrf_token %}
+    <label for="start_ip">Введите IP-адрес для сканирования:</label>
+    <input type="text" id="start_ip" name="start_ip" required>
+    <label for="server_type">Введите ключевые слова, чтобы определить сервер:</label>
+    <input type="text" id="server_type" name="server_type" required>
+    <label for="router_type">Введите ключевые слова, чтобы определить маршрутизатор:</label>
+    <input type="text" id="router_type" name="router_type" required>
+    <label for="switch_type">Введите ключевые слова, чтобы определить коммутатор:</label>
+    <input type="text" id="switch_type" name="switch_type" required>
+    <label for="client_type">Введите ключевые слова, чтобы определить клиент:</label>
+    <input type="text" id="client_type" name="client_type" required>
+    <button type="submit">Запустить сканирование</button>
+</form>
+
+<!-- Поле для вывода статуса -->
+<div id="scan-status"></div>
+
+<script>
+document.getElementById("scan-form").onsubmit = function(event) {
+    event.preventDefault();
+    let ip = document.getElementById("manual-ip").value;
+
+    fetch(/monitor/scan/?manual_ip=${ip})
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("scan-status").innerText = data.message;
+        })
+        .catch(error => console.error("Ошибка:", error));
+};
+</script>
+
+{% endblock %}

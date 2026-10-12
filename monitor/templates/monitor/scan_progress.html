@@ -1,0 +1,65 @@
+{% extends "monitor/base.html" %}
+{% block title %}Scanning Network...{% endblock %}
+
+{% block content %}
+<h2 class="text-center">Сканирование сети...</h2>
+
+<!-- Прогресс-бар -->
+<div class="progress" style="height: 30px; margin: 20px 0;">
+  <div id="scan-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-info"
+       role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+
+<!-- Забавные фразы -->
+<p id="scan-status" class="text-center mt-3" style="font-size: 1.2rem;"></p>
+
+<script>
+    const messages = [
+        "Ищем сбежавшие устройства... 🏃‍♂️",
+        "Танцуем с бубном... 🪘",
+        "Хвалим админа... 🙌",
+        "Запрашиваем печеньки у сервера... 🍪",
+        "Подмигиваем маршрутизатору... 😉",
+        "Находим потерянные пакеты... 📦",
+        "Кабель воткнут? 🪛",
+        "Кормим IP-адреса... 🥣",
+        "Уговариваем коммутатор работать... 🙏",
+        "Вызываем сетевого шамана... 🧙‍♂️",
+        "Перегружаем всё, что можно... 🔄",
+        "Делаем вид, что понимаем, что происходит... 🤔",
+        "Запускаем пакетные гонки... 🏎️",
+        "Ищем идеальный пинг... 📉",
+    ];
+
+    let i = 0;
+    let progress = 0;
+    const scanStatusDiv = document.getElementById("scan-status");
+    const progressBar = document.getElementById("scan-progress-bar");
+
+    function updateStatus() {
+        // Обновляем сообщение
+        scanStatusDiv.textContent = messages[i % messages.length];
+
+        // Обновляем прогресс
+        progress = Math.min(progress + 7, 100);
+        progressBar.style.width = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+        i++;
+
+        // Проверяем состояние сканирования
+        fetch("{% url 'scan_status' %}")
+            .then(response => response.json())
+            .then(data => {
+                if (!data.scan_in_progress) {
+                    window.location.href = "{% url 'home' %}";
+                } else {
+                    setTimeout(updateStatus, 1500);
+                }
+            })
+            .catch(error => console.error("Ошибка проверки статуса:", error));
+    }
+
+    updateStatus();
+</script>
+
+{% endblock %}

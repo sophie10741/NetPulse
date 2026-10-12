@@ -1,0 +1,22 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}
+    {% if note %}Редактировать заметку{% else %}Создать заметку{% endif %}
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">
+    {% if note %}Редактировать заметку{% else %}Создать заметку{% endif %}
+</h1>
+
+<form method="post" class="bg-white p-4 shadow-md rounded-lg">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
+        {% if note %}Сохранить{% else %}Добавить{% endif %}
+    </button>
+</form>
+
+<a href="{% url 'notes_list' %}" class="block mt-4 text-blue-500 hover:underline">Вернуться к списку</a>
+{% endblock %}

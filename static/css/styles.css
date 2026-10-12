@@ -1,0 +1,972 @@
+/* ===== Общие переменные ===== */
+:root {
+    --font-family: 'Inter', sans-serif;
+    --transition: 0.3s ease;
+
+    /* Светлая тема */
+    --light-bg: #f9fafb;
+    --light-text: #333;
+    --light-primary: #0077cc;
+    --light-hover: #96c6e5;
+    --light-border: #ddd;
+    --light-accent: #e5f1fb;
+
+    /* Темная тема */
+    --dark-bg: #121212;
+    --dark-text: #e0e0e0;
+    --dark-primary: #0099ff;
+    --dark-hover: #96c6e5;
+    --dark-border: #444;
+    --dark-accent: #1e2a38;
+
+    /* Общие стили */
+    --bg-card: #fff;
+    --bg-card-hover: #f5f5f5;
+    --bg-result: #f0f0f0;
+    --accent: #007bff;
+    --accent-hover: #0056b3;
+    --border-color: #ccc;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+/* ===== Основные стили ===== */
+body {
+  font-family: var(--font-family);
+  margin: 0;
+  padding: 0;
+  background: var(--light-bg);
+  color: var(--light-text);
+  transition: background-color var(--transition), color var(--transition);
+}
+
+/* Светлая тема */
+body.light {
+  background: var(--light-bg);
+  color: var(--light-text);
+}
+
+/* Тёмная тема */
+body.dark {
+    --bg-card: #1e1e1e;
+    --bg-card-hover: #292929;
+    --bg-result: #333;
+    --accent: #4ea3ff;
+    --accent-hover: #2c75d3;
+    --border-color: #444;
+    --shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+  background: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+.main-container {
+    margin-top: 70px; /* Сдвигаем контент вниз */
+    padding: 1rem;
+    position: relative; /* Для избежания перекрытия с модальными окнами */
+    z-index: 1; /* Убедимся, что контент находится ниже модальных окон */
+}
+
+/* ===== Навигация ===== */
+.navbar {
+  background: var(--light-primary);
+  padding: 15px 20px;
+  color: white;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* Логотип */
+.navbar-brand {
+  font-size: 1.8rem;
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center; /* Центрируем элементы по вертикали */
+}
+
+.navbar-logo {
+  width: 40px; /* Устанавливаем размер логотипа */
+  height: auto;
+  margin-right: 10px; /* Отступ справа от картинки */
+}
+
+/* Меню */
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 45px;
+  margin: 0;
+  padding: 0;
+  padding-left: 130px;
+  justify-content: center; /* Центрируем меню */
+  flex-grow: 1; /* Делаем меню гибким */
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: normal;
+  font-size: 1rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-links a:hover {
+  color: var(--light-hover);
+}
+
+/* Стили для темной темы навигации */
+body.dark .navbar {
+  background: var(--dark-primary);
+}
+
+body.dark .navbar-links a:hover {
+  color: var(--dark-hover);
+}
+/* ===== Тематический переключатель ===== */
+.theme-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-switch input {
+  display: none;
+}
+
+.theme-switch .slider {
+  width: 40px;
+  height: 20px;
+  background: var(--light-border);
+  border-radius: 50px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.theme-switch .slider::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  transition: 0.3s ease;
+}
+
+.theme-switch input:checked + .slider::after {
+  left: 20px;
+}
+
+body.dark .theme-switch .slider {
+  background: var(--dark-border);
+}
+/* ===== Кнопки ===== */
+.btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background var(--transition);
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
+}
+.btn-scan {
+    background: #007bff;
+    color: white;
+    padding: 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+.btn-primary {
+  background: var(--light-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--light-hover);
+}
+
+
+/* Темная тема для кнопок */
+body.dark .btn-primary {
+  background: var(--dark-primary);
+}
+
+body.dark .btn-primary:hover {
+  background: var(--dark-hover);
+}
+
+/* ===== Подвал ===== */
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  background: var(--light-primary);
+  color: white;
+  transition: var(--transition);
+}
+
+body.dark .footer {
+  background: var(--dark-primary);
+}
+
+.scan-container {
+    margin-top: 100px;
+    margin-left: 20px;
+}
+
+/* ===== Контекстное меню ===== */
+#context-menu {
+  display: none;
+  position: absolute;
+  background: var(--light-bg);
+  border: 1px solid var(--light-border);
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  padding: 8px;
+  border-radius: 5px;
+  min-width: 160px;
+}
+
+#context-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#context-menu li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--light-border);
+  background: var(--light-bg);
+}
+
+#context-menu li:hover {
+  background: var(--light-hover);
+  color: white;
+}
+
+/* ===== Анимации ===== */
+@keyframes fadeInOut {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+#scan-status {
+  font-size: 18px;
+  margin: 20px 0;
+  color: var(--light-primary);
+  animation: fadeInOut 1s infinite;
+}
+/* ===== Топология сети ===== */
+.network-topology {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: var(--light-bg);
+    transition: background-color var(--transition);
+}
+
+#cy {
+    width: 100%;
+    height: 400px;
+    border: 1px solid var(--light-border);
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: border-color var(--transition);
+}
+
+/* Темная тема для топологии */
+body.dark .network-topology {
+    background-color: var(--dark-bg);
+}
+
+body.dark #cy {
+    border-color: var(--dark-border);
+}
+
+/* Стили для контекстного меню */
+.context-menu {
+    display: none;
+    position: absolute;
+    background-color: var(--light-bg);
+    border: 1px solid var(--light-border);
+    border-radius: 5px;
+    padding: 5px 0;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body.dark .context-menu {
+    background-color: var(--dark-bg);
+    border-color: var(--dark-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.context-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.context-menu li {
+    padding: 8px 15px;
+    cursor: pointer;
+    color: var(--light-text);
+}
+
+body.dark .context-menu li {
+    color: var(--dark-text);
+}
+
+.context-menu li:hover {
+    background-color: var(--light-hover);
+}
+
+body.dark .context-menu li:hover {
+    background-color: var(--dark-hover);
+}
+
+
+/* ===== Форма ===== */
+form label {
+  display: block;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+form input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid var(--light-border);
+  border-radius: 5px;
+  background: white;
+  transition: border-color var(--transition);
+}
+
+form input:focus {
+  border-color: var(--light-primary);
+  outline: none;
+}
+
+form button {
+  margin-top: 15px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 5px;
+  background-color: var(--light-primary);
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--transition);
+}
+
+form button:hover {
+  background-color: var(--light-hover);
+}
+
+/* Темная тема для форм */
+body.dark form input {
+  background: var(--dark-accent);
+  color: var(--dark-text);
+  border-color: var(--dark-border);
+}
+
+body.dark form input:focus {
+  border-color: var(--dark-primary);
+}
+/* ===== Таблица ===== */
+h3 {
+    padding-left: 20px;
+}
+
+#filter-form {
+    padding: 20px;
+}
+.devices-table {
+    padding: 20px;
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+.devices-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: white;
+  color: var(--light-text);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.devices-table th,
+.devices-table td {
+  padding: 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--light-border);
+}
+
+.devices-table th {
+  background: var(--light-accent);
+  text-transform: uppercase;
+}
+
+.devices-table tbody tr:hover {
+  background: var(--light-accent);
+}
+
+/* Темная тема для таблицы */
+body.dark .devices-table table {
+  background: var(--dark-accent);
+  color: var(--dark-text);
+}
+
+body.dark .devices-table th {
+  background: var(--dark-hover);
+}
+
+body.dark .devices-table tbody tr:hover {
+  background: var(--dark-border);
+}
+/* ===== Улучшение вида статуса ===== */
+.status-online {
+  color: #2e7d32;
+  font-weight: bold;
+}
+
+.status-offline {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+/* Заголовки */
+h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+h2.text-center {
+    color: var(--light-primary);
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 16px;
+    margin-top: 20px;
+
+}
+/* Карточки */
+.calculator-card, .utility-card {
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    transition: 0.3s;
+}
+.body.dark .calculator-card, .utility-card {
+    background: var(--dark-accent);
+}
+.calculator-card:hover, .utility-card:hover {
+    background: var(--bg-card-hover);
+}
+/* Результаты */
+.result-box {
+    background: var(--bg-result);
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 16px;
+    box-shadow: var(--shadow);
+}
+
+/* Навигация по категориям */
+.category-list a {
+    color: var(--accent);
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.category-list a:hover {
+    color: var(--accent-hover);
+}
+
+/* Пагинация */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.pagination a {
+    color: var(--accent);
+    font-weight: bold;
+    padding: 8px;
+    transition: 0.3s;
+}
+
+.pagination a:hover {
+    color: var(--accent-hover);
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.btn {
+    background: var(--accent);
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.container {
+    padding: 20px;
+}
+.btn:hover {
+    background: var(--accent-hover);
+}
+
+.active-category {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.pagination-link {
+    color: var(--accent);
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.pagination-link:hover {
+    color: var(--accent-hover);
+}
+.page-title, h1.page-title{
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    margin-left: 20px;
+}
+
+.calculator-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.calculator-description a {
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+/* Стили для списка категорий */
+.category-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.category-list li {
+    display: inline;
+}
+
+.category-list a {
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #333;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.category-list a:hover {
+    background-color: #f3f3f3;
+}
+
+.active-category {
+    font-weight: bold;
+    color: #fff;
+    background-color: #007bff;
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+
+/* Карточки полезностей */
+.utility-card {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+
+.utility-card:hover {
+    background: #f0f0f0;
+}
+
+.utility-card h3 {
+    margin: 0 0 5px;
+}
+
+.utility-card a {
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.utility-card a:hover {
+    text-decoration: underline;
+}
+
+/* Пагинация */
+.pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.step-links {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pagination-link {
+    padding: 8px 12px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #007bff;
+    transition: 0.3s;
+}
+
+.pagination-link:hover {
+    background-color: #007bff;
+    color: #fff;
+}
+/* Карточка полезности */
+.utility-detail {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Заголовок полезности */
+.utility-detail h1 {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* Контент полезности */
+.utility-detail p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Кнопка "Назад" */
+.utility-back {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #fff;
+    background-color: #007bff;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.utility-back:hover {
+    background-color: #0056b3;
+}
+/* Контейнер заметки */
+.note-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: 0.3s;
+}
+
+.note-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* Заголовок заметки */
+.note-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.note-title a {
+    text-decoration: none;
+    color: #007bff;
+    transition: 0.3s;
+}
+
+.note-title a:hover {
+    color: #0056b3;
+}
+
+/* Информация о заметке */
+.note-meta {
+    font-size: 14px;
+    color: #666;
+    margin-top: 10px;
+}
+
+/* Комментарии */
+.comment-box {
+    background: #f9f9f9;
+    border-left: 4px solid #007bff;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+}
+
+.comment-box p {
+    margin: 5px 0;
+}
+
+/* Кнопки */
+.note-button {
+    display: inline-block;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: #fff;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.note-button.edit {
+    background-color: #007bff;
+}
+
+.note-button.delete {
+    background-color: #dc3545;
+}
+
+.note-button:hover {
+    opacity: 0.8;
+}
+
+/* Легенда */
+.legend-container {
+    background-color: var(--light-bg);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 400px;
+}
+
+body.dark .legend-container {
+    background-color: var(--dark-bg);
+}
+
+/* Элемент легенды */
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+body.dark .legend-item {
+    color: var(--dark-text);
+}
+
+/* Цветные маркеры */
+.legend-box {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    border-radius: 3px;
+    margin-right: 8px;
+}
+
+.server { background: blue; }
+.router { background: red; }
+.switch { background: green; }
+.client { background: orange; }
+.unknown { background: gray; }
+/* Стили кнопки */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+    padding-right: 35px;
+}
+
+.navbar-auth button {
+  background: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.navbar-auth button:hover {
+  background: #0056b3;
+}
+
+/* ===== Стили для авторизованного пользователя ===== */
+.navbar-auth p {
+  margin: 0;
+}
+
+#logout-btn {
+  background: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+#logout-btn:hover {
+  background: #0056b3;
+}
+/* Стили модального окна */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    background: white;
+    padding: 20px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+.modal-content {
+    text-align: center;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+input[type="text"],
+input[type="password"] {
+    width: 90%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* ===== Стиль для прогресс-бара ===== */
+.progress-container {
+  width: 100%;
+  background-color: #f4f4f4;
+  border-radius: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar {
+  height: 30px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  line-height: 30px;
+  transition: width 1s ease-in-out;
+  position: relative;
+}
+
+.progress-text {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  color: white;
+  font-weight: bold;
+}
+
+/* ===== Стиль для текста и забавных фраз ===== */
+#scan-status {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--light-primary);
+  margin-top: 20px;
+  animation: fadeIn 2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Адаптивность для мобильных устройств ===== */
+@media (max-width: 768px) {
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  #scan-status {
+    font-size: 1.2rem;
+  }
+
+  .progress {
+    height: 25px;
+  }
+
+  .progress-bar {
+    font-size: 0.9rem;
+  }
+}

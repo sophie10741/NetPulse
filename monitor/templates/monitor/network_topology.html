@@ -1,0 +1,187 @@
+{% extends "monitor/base.html" %}
+{% block title %}Network Topology{% endblock %}
+
+{% block content %}
+<h2>Графическая топология сети</h2>
+<div id="cy" style="width: 100%; height: 600px; border: 1px solid #ddd;"></div>
+<div id="context-menu" class="context-menu">
+    <ul id="context-menu-list"></ul>
+</div>
+<button id="refreshTopology">🔄 Обновить топологию</button>
+<div id="legend">
+    <span style="color: blue;">■</span> Сервер
+    <span style="color: red;">■</span> Маршрутизатор
+    <span style="color: green;">■</span> Коммутатор
+    <span style="color: orange;">■</span> Клиент
+    <span style="color: gray;">■</span> Неизвестный
+</div>
+<!-- Подключаем Cytoscape.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.1/cytoscape.min.js"></script>
+<style>
+    #context-menu {
+        display: none;
+        position: absolute;
+        background: white;
+        border: 1px solid #ccc;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        padding: 5px;
+        border-radius: 5px;
+        min-width: 150px;
+    }
+
+    #context-menu ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #context-menu li {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        background: white;
+    }
+
+    #context-menu li:last-child {
+        border-bottom: none;
+    }
+
+    #context-menu li:hover {
+        background: #007bff;
+        color: white;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("{% url 'network_topology_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            let cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: [...data.nodes, ...data.edges],
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(label)',
+                            'color': 'white',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'background-color': 'data(color)',
+                            'width': '50px',
+                            'height': '50px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#ccc',
+                            'target-arrow-color': '#ccc',
+                            'target-arrow-shape': 'triangle'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'cose',
+                    animate: true
+                }
+            });
+
+            // Проверяем, что граф создан
+            console.log("Граф создан:", cy);
+
+            const deviceSettings = {
+                router: [
+                    { name: "Change IP Address", template: "change_ip" },
+                    { name: "Create GRE Tunnel", template: "create_gre_tunnel" },
+                    { name: "Set Default Route", template: "default_route" },
+                ],
+                server: [
+                    { name: "Change IP Address", template: "change_ip" },
+                    { name: "Configure DHCP", template: "configure_dhcp" },
+                    { name: "Configure DNS", template: "configure_dns" },
+                    { name: "Set Timezone", template: "set_timezone" },
+                    { name: "Configure Chrony", template: "configure_chrony" },
+                    { name: "Configure Ansible", template: "configure_ansible" },
+                ],
+                switch: [
+                    { name: "Change IP Address", template: "change_ip" },
+                ],
+                client: [
+                    { name: "Change IP Address", template: "change_ip" },
+                ],
+                unknown: [
+                    { name: "Change IP Address", template: "change_ip" },
+                ]
+            };
+
+            const contextMenu = document.getElementById('context-menu');
+            const contextMenuList = document.getElementById('context-menu-list');
+
+            // 📌 Обработчик клика по узлу (открытие меню)
+            cy.on('tap', 'node', (event) => {
+    const node = event.target;
+    const deviceId = node.data('id');
+    const deviceType = node.data('device_type') || 'unknown';
+
+    console.log(`Клик по устройству: ${node.data('label')} (ID: ${deviceId}, Type: ${deviceType})`);
+
+    // Очищаем старые настройки
+    contextMenuList.innerHTML = '';
+    const settings = deviceSettings[deviceType] || [];
+
+    settings.forEach(setting => {
+        const li = document.createElement('li');
+        li.textContent = setting.name;
+        li.onclick = () => {
+            window.location.href = `/devices/${deviceId}/template/?template=${setting.template}`;
+        };
+        contextMenuList.appendChild(li);
+    });
+
+    // Убедимся, что contextMenu действительно найден
+    console.log("contextMenu найден?", contextMenu);
+
+    // Показываем меню возле клика
+    contextMenu.style.top = `${event.renderedPosition.y + 10}px`;
+    contextMenu.style.left = `${event.renderedPosition.x + 10}px`;
+    contextMenu.style.setProperty('display', 'block', 'important');
+    // Принудительное обновление стиля
+setTimeout(() => {
+    contextMenu.style.display = 'block';
+    console.log("После таймаута display:", window.getComputedStyle(contextMenu).display);
+}, 10);
+
+
+    // Проверяем, поменялся ли display
+    console.log("Свойство display у contextMenu:", window.getComputedStyle(contextMenu).display);
+});
+
+// Закрыть меню при клике вне его области
+document.addEventListener('click', (event) => {
+    if (!contextMenu.contains(event.target)) {
+        contextMenu.style.display = 'none';
+    }
+});
+            // 📌 Кнопка обновления топологии
+            document.getElementById("refreshTopology").addEventListener("click", function () {
+                fetch("{% url 'network_topology_data' %}")
+                    .then(response => response.json())
+                    .then(updatedData => {
+                        cy.elements().remove();
+                        cy.add(updatedData.nodes);
+                        cy.add(updatedData.edges);
+                        cy.layout({ name: 'cose' }).run();
+                    });
+            });
+        })
+        .catch(error => console.error("Ошибка загрузки топологии:", error));
+});
+
+
+</script>
+
+{% endblock %}

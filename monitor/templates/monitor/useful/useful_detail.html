@@ -1,0 +1,11 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}{{ utility.title }}{% endblock %}
+
+{% block content %}
+<div class="utility-detail">
+    <h1>{{ utility.title }}</h1>
+    <p>{{ utility.content }}</p>
+    <a href="{% url 'useful' %}" class="utility-back">Назад</a>
+</div>
+{% endblock %}

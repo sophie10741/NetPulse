@@ -1,0 +1,24 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}Select Interface{% endblock %}
+
+{% block content %}
+<h2>Select Interface for {{ device.name }} - Action: {{ action }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="interface" class="form-label">Select Interface</label>
+        <select name="interface" id="interface" class="form-control">
+            {% for interface in interfaces %}
+                <option value="{{ interface.id }}">{{ interface.interface_name }} ({{ interface.ip_address }})</option>
+            {% empty %}
+                <option disabled>No interfaces available</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+<a href="/monitor" class="btn">Back to Topology</a>
+{% endblock %}

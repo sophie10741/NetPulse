@@ -1,0 +1,23 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}SSH Command{% endblock %}
+
+{% block content %}
+<h2>Execute SSH Command on {{ device.name }}</h2>
+
+<form method="post">
+	{% csrf_token %}
+	<div class="mb-3">
+		<label for="command" class="form-label">Command</label>
+		<input type="text" name="command" id="command" class="form-control" placeholder="Enter command">
+	</div>
+	<button type="submit" class="btn btn-primary">Execute</button>
+</form>
+
+{% if result %}
+<h3>Result:</h3>
+<pre class="bg-light p-3">{{ result }}</pre>
+{% endif %}
+
+<a href="/monitor/devices/" class="btn btn-secondary mt-3">Back to Devices</a>
+{% endblock %}

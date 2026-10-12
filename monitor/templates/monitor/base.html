@@ -1,0 +1,182 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}NetPulse{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" />
+</head>
+
+<body data-theme="light">
+    {% include 'monitor/includes/navbar.html' %}
+
+    <!-- Основной контент страницы -->
+    <div class="content">
+        <div class="main-container">{% block content %}{% endblock %}</div>
+    </div>
+
+
+    <footer class="footer">
+        <p>&copy; 2025 NetPulse</p>
+    </footer>
+
+    <script>
+        function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    console.log(getCookie("csrftoken")); // Проверка, работает ли
+});
+        document.addEventListener("DOMContentLoaded", () => {
+            const body = document.body;
+            const themeToggle = document.getElementById("theme-toggle");
+            const themeIcon = document.getElementById("theme-icon");
+
+            // Загружаем тему из localStorage
+            const savedTheme = localStorage.getItem("theme") || "light";
+            body.classList.toggle("dark", savedTheme === "dark");
+            themeToggle.checked = savedTheme === "dark";
+            themeIcon.textContent = savedTheme === "dark" ? "🌙" : "☀️";
+
+            // При изменении чекбокса меняем тему
+            themeToggle.addEventListener("change", () => {
+                body.classList.toggle("dark", themeToggle.checked);
+                localStorage.setItem("theme", themeToggle.checked ? "dark" : "light");
+                themeIcon.textContent = themeToggle.checked ? "🌙" : "☀️";
+            });
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("login-modal");
+    const loginBtn = document.getElementById("login-btn");
+    const closeBtn = document.querySelector(".close");
+
+    if (loginBtn) {
+        loginBtn.onclick = function () {
+            modal.style.display = "block";
+        };
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = function () {
+            modal.style.display = "none";
+        };
+    }
+
+    window.onclick = function (event) {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    };
+
+    // AJAX-вход
+    const form = document.getElementById("login-form");
+    if (form) {
+        form.onsubmit = async function (event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+
+            const response = await fetch("{% url 'login' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": getCookie("csrftoken"),
+                },
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                window.location.href = "{% url 'home' %}";  // Редирект на главную
+            } else {
+                document.getElementById("login-error").textContent = "Ошибка: " + result.error;
+            }
+        };
+    }
+
+
+});
+
+        document.addEventListener("DOMContentLoaded", function () {
+    const registerModal = document.getElementById("register-modal");
+    const registerBtn = document.getElementById("register-btn");
+    const closeRegister = registerModal.querySelector(".close");
+    const step1Form = document.getElementById("step1-form");
+    const step2Form = document.getElementById("step2-form");
+
+    registerBtn.onclick = function () {
+        registerModal.style.display = "block";
+    };
+
+    closeRegister.onclick = function () {
+        registerModal.style.display = "none";
+        step1Form.style.display = "block";
+        step2Form.style.display = "none";
+    };
+
+    window.onclick = function (event) {
+        if (event.target === registerModal) {
+            registerModal.style.display = "none";
+        }
+    };
+
+    step1Form.onsubmit = async function (event) {
+        event.preventDefault();
+        const formData = new FormData(step1Form);
+
+        const response = await fetch("{% url 'validate_user' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            step1Form.style.display = "none";
+            step2Form.style.display = "block";
+        } else {
+            alert("Ошибка: " + result.error);
+        }
+    };
+
+    step2Form.onsubmit = async function (event) {
+        event.preventDefault();
+        const formData = new FormData(step2Form);
+
+        const response = await fetch("{% url 'complete_registration' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": getCookie("csrftoken"),
+            },
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            window.location.reload();
+        } else {
+            alert("Ошибка: " + result.error);
+        }
+    };
+});
+
+    </script>
+
+
+</body>
+</html>

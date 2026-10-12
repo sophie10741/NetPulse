@@ -1,0 +1,5 @@
+Django>=5.1,<5.3
+paramiko>=3.4
+ping3>=4.0
+pysnmp>=7.1
+django-environ>=0.11

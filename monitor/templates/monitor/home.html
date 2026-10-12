@@ -1,0 +1,264 @@
+{% extends "monitor/base.html" %}
+{% block title %}NetPulse{% endblock %}
+
+{% block content %}
+    <div class="home-container">
+        {% if not devices %}
+        <div class="scan-container">
+            <h3>Привет, админ!</h3>
+            <p>Похоже, сеть ещё не отсканирована. Начнём?</p>
+            <form id="scan-form" method="POST" action="{% url 'start_scan' %}">
+                {% csrf_token %}
+                <label for="start_ip">Введите IP-адрес для сканирования:</label>
+                <input type="text" id="start_ip" name="start_ip" required>
+                <label for="server_type">Ключевые слова для сервера:</label>
+                <input type="text" id="server_type" name="server_type" required>
+                <label for="router_type">Ключевые слова для маршрутизатора:</label>
+                <input type="text" id="router_type" name="router_type" required>
+                <label for="switch_type">Ключевые слова для коммутатора:</label>
+                <input type="text" id="switch_type" name="switch_type" required>
+                <label for="client_type">Ключевые слова для клиента:</label>
+                <input type="text" id="client_type" name="client_type" required>
+                <button type="submit" class="btn-scan">Отсканировать</button>
+            </form>
+        </div>
+
+        {% else %}
+<div class="network-topology">
+    <h3>Графическая топология</h3>
+    <div id="cy" style="height: 400px; border: 1px solid #ddd; margin-bottom: 20px;"></div>
+    <div id="context-menu" class="context-menu">
+        <ul id="context-menu-list"></ul>
+    </div>
+</div>
+
+<!-- Легенда -->
+<div id="legend" class="legend-container">
+    <div class="legend-item"><span class="legend-box server"></span> Сервер</div>
+    <div class="legend-item"><span class="legend-box router"></span> Маршрутизатор</div>
+    <div class="legend-item"><span class="legend-box switch"></span> Коммутатор</div>
+    <div class="legend-item"><span class="legend-box client"></span> Клиент</div>
+    <div class="legend-item"><span class="legend-box unknown"></span> Неизвестный</div>
+</div>
+
+        </div>
+        <h3>Таблица устройств</h3>
+    <form method="get" id="filter-form">
+    <div class="row g-2">
+        <div class="col">
+            {{ form.name.label_tag }} {{ form.name }}
+        </div>
+        <div class="col">
+            {{ form.device_type.label_tag }} {{ form.device_type }}
+        </div>
+        <div class="col">
+            {{ form.status.label_tag }} {{ form.status }}
+        </div>
+        <div class="col">
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </div>
+    </div>
+</form>
+        <div class="devices-table">
+    <table>
+        <thead>
+            <tr>
+                <th>Имя</th>
+                <th>Тип</th>
+                <th>IP-адреса</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.name }}</td>
+                <td>{{ device.device_type }}</td>
+                <td>
+                    {% for interface in device.networkinterface_set.all %}
+                        {{ interface.ip_address }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        No IP Assigned
+                    {% endfor %}
+                </td>
+                <td>
+{#                    {% if device.status == "online" %}#}
+                        ● Online
+{#                    {% else %}#}
+{#                        ● Offline#}
+{#                    {% endif %}#}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">Нет устройств</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+    {% endif %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.21.1/cytoscape.min.js"></script>
+
+    <script>
+
+        {% if topology_data %}
+            const topologyData = {{ topology_data|safe }};
+                    console.log("Исходные данные топологии:", topologyData);
+                    if (Array.isArray(topologyData.nodes)) {
+    topologyData.nodes.forEach(element => {
+        if (element.data && element.data.label) {
+            element.data.shortLabel = element.data.label.split('.')[0]; // Убираем домен
+        }
+    });
+}
+                    console.log("Обновлённые данные топологии:", topologyData);
+            console.log("Данные для топологии:", {{ topology_data|safe }});
+            let cy = cytoscape({
+                container: document.getElementById('cy'),
+                elements: [...topologyData.nodes, ...topologyData.edges],
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'label': 'data(shortLabel)',
+                            'color': 'var(--light-text)',
+                            'text-valign': 'bottom',
+                            'text-halign': 'center',
+                            'text-margin-y': 10,
+                            'background-color': 'data(color)',
+                            'width': '50px',
+                            'height': '50px'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#ccc',
+                            'target-arrow-color': '#ccc',
+                            'target-arrow-shape': 'triangle'
+                        }
+                    }
+                ],
+                layout: {
+                    name: 'cose',
+                    animate: true
+                }
+            });
+
+            console.log("Граф создан:", cy);
+            function getComputedColor(variable) {
+    return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+}
+// Добавляем обработчик события загрузки DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем текущую тему и обновляем цвета
+    updateNodeLabelColor();
+});
+
+// Функция обновления цветов текста при смене темы
+function updateNodeLabelColor() {
+    let isDark = document.body.classList.contains('dark');
+    let newColor = isDark ? getComputedColor('--dark-text') : getComputedColor('--light-text');
+
+    console.log("Текущая тема:", isDark ? "Тёмная" : "Светлая");
+    console.log("Выбранный цвет для текста:", newColor);
+
+    cy.style()
+      .selector('node')
+
+      .style('color', newColor)
+      .update();
+}
+
+document.getElementById("theme-toggle").addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    // Сохраняем тему
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    updateNodeLabelColor();
+});
+
+
+
+            const deviceSettings = {
+    router: [
+        { name: "Change IP Address", template: "change_ip", requiresInterface: true },
+        { name: "Create GRE Tunnel", template: "create_gre_tunnel", requiresInterface: false },
+        { name: "Set Default Route", template: "default_route", requiresInterface: true },
+    ],
+    server: [
+        { name: "Change IP Address", template: "change_ip", requiresInterface: true },
+        { name: "Configure DHCP", template: "configure_dhcp", requiresInterface: false },
+        { name: "Configure DNS", template: "configure_dns", requiresInterface: false },
+        { name: "Set Timezone", template: "set_timezone", requiresInterface: false },
+        { name: "Configure Chrony", template: "configure_chrony", requiresInterface: false },
+        { name: "Configure Ansible", template: "configure_ansible", requiresInterface: false },
+    ],
+    switch: [
+        { name: "Change IP Address", template: "change_ip", requiresInterface: true },
+    ],
+    client: [
+        { name: "Change IP Address", template: "change_ip", requiresInterface: true },
+    ],
+    unknown: [
+        { name: "Change IP Address", template: "change_ip", requiresInterface: true },
+    ]
+};
+
+const contextMenu = document.getElementById('context-menu');
+const contextMenuList = document.getElementById('context-menu-list');
+
+// 📌 Обработчик клика по узлу (открытие меню)
+cy.on('tap', 'node', (event) => {
+    const node = event.target;
+    const deviceId = node.data('id');
+    const deviceType = node.data('device_type') || 'unknown';
+
+    console.log(`Клик по устройству: ${node.data('label')} (ID: ${deviceId}, Type: ${deviceType})`);
+
+    // Очищаем старые настройки
+    contextMenuList.innerHTML = '';
+    const settings = deviceSettings[deviceType] || [];
+
+    settings.forEach(setting => {
+        const li = document.createElement('li');
+        li.textContent = setting.name;
+        li.onclick = () => {
+            if (setting.requiresInterface) {
+                // Если действие требует выбора интерфейса, идем на страницу выбора
+                window.location.href = `/select-interface/${deviceId}/${setting.template}/`;
+            } else {
+                // Если действие не требует выбора интерфейса, идем сразу на страницу настройки
+                window.location.href = `/devices/${deviceId}/template/?template=${setting.template}`;
+            }
+        };
+        contextMenuList.appendChild(li);
+    });
+
+    contextMenu.style.top = `${event.renderedPosition.y + 10}px`;
+    contextMenu.style.left = `${event.renderedPosition.x + 10}px`;
+    contextMenu.style.setProperty('display', 'block', 'important');
+
+    // Принудительное обновление стиля
+    setTimeout(() => {
+        contextMenu.style.display = 'block';
+        console.log("После таймаута display:", window.getComputedStyle(contextMenu).display);
+    }, 10);
+
+    // Проверяем, поменялся ли display
+    console.log("Свойство display у contextMenu:", window.getComputedStyle(contextMenu).display);
+});
+
+// Закрыть меню при клике вне его области
+document.addEventListener('click', (event) => {
+    if (!contextMenu.contains(event.target)) {
+        contextMenu.style.display = 'none';
+    }
+});
+        {% endif %}
+
+
+    </script>
+{% endblock %}

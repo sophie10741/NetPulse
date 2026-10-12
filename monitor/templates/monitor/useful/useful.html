@@ -1,0 +1,56 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}Полезности{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Полезности</h1>
+
+<div class="mb-4">
+    <h2 class="text-xl font-semibold">Категории:</h2>
+    <ul class="category-list">
+    <li>
+        <a href="{% url 'useful' %}" class="{% if not selected_category %}active-category{% endif %}">
+            Все
+        </a>
+    </li>
+    {% for category in categories %}
+        <li>
+            <a href="{% url 'useful' %}?category={{ category.id }}"
+               class="{% if selected_category == category.id %}active-category{% endif %}">
+                {{ category.name }}
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+
+{% if utilities %}
+    <div>
+        {% for utility in utilities %}
+            <div class="utility-card">
+                <h3>{{ utility.title }}</h3>
+                <p>{{ utility.description }}</p>
+                <a href="{% url 'useful_detail' utility.id %}">Читать далее</a>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p class="text-gray-500">Нет полезностей в этой категории.</p>
+{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+        {% if utilities.has_previous %}
+            <a href="?page=1" class="pagination-link">&laquo; Первая</a>
+            <a href="?page={{ utilities.previous_page_number }}" class="pagination-link">Предыдущая</a>
+        {% endif %}
+
+        <span class="current">Страница {{ utilities.number }} из {{ utilities.paginator.num_pages }}</span>
+
+        {% if utilities.has_next %}
+            <a href="?page={{ utilities.next_page_number }}" class="pagination-link">Следующая</a>
+            <a href="?page={{ utilities.paginator.num_pages }}" class="pagination-link">Последняя &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+{% endblock %}

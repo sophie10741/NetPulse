@@ -1,0 +1,60 @@
+{% extends "monitor/base.html" %}
+{% block title %}Devices{% endblock %}
+
+{% block content %}
+<form method="get" class="mb-3">
+  <div class="row g-2">
+    <div class="col">
+      {{ form.name.label_tag }} {{ form.name }}
+    </div>
+    <div class="col">
+      {{ form.device_type.label_tag }} {{ form.device_type }}
+    </div>
+    <div class="col">
+      {{ form.status.label_tag }} {{ form.status }}
+    </div>
+    <div class="col">
+      <button type="submit" class="btn btn-primary">Filter</button>
+    </div>
+  </div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Device Type</th>
+      <th>IP Addresses</th>
+      <th>Status</th>
+      <th>SNMP Info</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for device in devices %}
+    <tr>
+      <td>{{ device.name }}</td>
+      <td>{{ device.device_type }}</td>
+      <td>
+        {% for interface in device.networkinterface_set.all %}
+          {{ interface.ip_address }}{% if not forloop.last %}, {% endif %}
+        {% empty %}
+          No IP Assigned
+        {% endfor %}
+      </td>
+      <td>
+        {% if device.is_online %}
+          <span class="badge bg-success">Online</span>
+        {% else %}
+          <span class="badge bg-danger">Offline</span>
+        {% endif %}
+      </td>
+      <td>{{ device.get_snmp_info }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="5" class="text-center">No devices found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

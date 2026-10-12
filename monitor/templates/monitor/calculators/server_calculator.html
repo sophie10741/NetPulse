@@ -1,0 +1,40 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}Калькулятор серверов{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Калькулятор серверов</h1>
+
+<form method="post" class="form-container">
+    {% csrf_token %}
+    
+    <label class="block mb-2">Количество пользователей:</label>
+    <input type="number" name="users" class="w-full p-2 border rounded-md" required>
+
+    <label class="block mt-3 mb-2">Средняя нагрузка на 1 пользователя (CPU в ядрах):</label>
+    <input type="number" step="0.1" name="cpu_per_user" class="w-full p-2 border rounded-md" required>
+
+    <label class="block mt-3 mb-2">Средняя нагрузка на 1 пользователя (RAM в ГБ):</label>
+    <input type="number" step="0.1" name="ram_per_user" class="w-full p-2 border rounded-md" required>
+
+    <label class="block mt-3 mb-2">Мощность одного сервера (CPU в ядрах):</label>
+    <input type="number" name="server_cpu" class="w-full p-2 border rounded-md" required>
+
+    <label class="block mt-3 mb-2">Мощность одного сервера (RAM в ГБ):</label>
+    <input type="number" name="server_ram" class="w-full p-2 border rounded-md" required>
+
+    <button type="submit" class="btn">
+        Рассчитать
+    </button>
+</form>
+
+{% if result %}
+<div class="result-box">
+    <h2 class="text-xl font-semibold">Результаты:</h2>
+    <p><strong>Минимальное количество серверов (по CPU):</strong> {{ result.servers_by_cpu }}</p>
+    <p><strong>Минимальное количество серверов (по RAM):</strong> {{ result.servers_by_ram }}</p>
+    <p><strong>Окончательное количество серверов:</strong> {{ result.total_servers }}</p>
+</div>
+{% endif %}
+
+{% endblock %}

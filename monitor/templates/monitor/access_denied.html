@@ -1,0 +1,41 @@
+{% extends "monitor/base.html" %}
+
+{% block content %}
+<h2>Упс...</h2>
+<p style="font-size: 21px">Эта страница доступна только авторизованным пользователям</p>
+
+<!-- Модальное окно входа -->
+<div id="login-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Вход</h2>
+        <form id="login-form">
+            {% csrf_token %}
+            <input type="text" name="username" placeholder="Логин" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit">Войти</button>
+        </form>
+        <p id="login-error"></p>
+    </div>
+</div>
+
+<!-- Модальное окно регистрации -->
+<div id="register-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Регистрация</h2>
+        <form id="step1-form">
+            <input type="text" name="username" placeholder="Логин" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit">Далее</button>
+        </form>
+        <form id="step2-form" style="display: none;">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="text" name="phone" placeholder="Номер телефона" required>
+            <input type="password" name="new_password" placeholder="Новый пароль" required>
+            <input type="password" name="confirm_password" placeholder="Повторите пароль" required>
+            <button type="submit">Завершить регистрацию</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

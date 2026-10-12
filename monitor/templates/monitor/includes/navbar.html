@@ -1,0 +1,32 @@
+<nav class="navbar">
+    <div class="navbar-container">
+        <a href="{% url 'home' %}" class="navbar-brand">
+            <img src="/static/images/logo.jpg" alt="Logo" class="navbar-logo">
+            NetPulse
+        </a>
+
+        <ul class="navbar-links">
+            <li><a href="{% url 'calculators' %}">Калькуляторы</a></li>
+            <li><a href="{% url 'useful' %}">Полезности</a></li>
+            <li><a href="{% url 'notes_list' %}">Заметки</a></li>
+        </ul>
+
+        <!-- Контейнер для кнопок и переключателя темы -->
+        <div class="navbar-right">
+            <!-- Переключатель темы -->
+            <div class="theme-switch">
+                <input type="checkbox" id="theme-toggle">
+                <label for="theme-toggle" class="slider"></label>
+                <span id="theme-icon">☀️</span>
+            </div>
+
+            <div class="navbar-auth">
+                {% if user.is_authenticated %}
+                    <p>Привет, {{ user.username }} | <a href="{% url 'logout' %}" id="logout-btn">Выйти</a></p>
+                {% else %}
+                    <button id="login-btn">Войти</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

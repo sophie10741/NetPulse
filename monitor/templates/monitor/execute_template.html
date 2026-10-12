@@ -1,0 +1,33 @@
+{% extends "monitor/base.html" %}
+
+{% block title %}Execute Template{% endblock %}
+
+{% block content %}
+<h2>Execute Template: {{ template_name }} on {{ device.name }}</h2>
+
+{% if template %}
+<form method="post">
+    {% csrf_token %}
+    <p>{{ template.description }}</p>
+
+    {% for param in parameters %}
+    <div class="mb-3">
+        <label for="{{ param }}" class="form-label">{{ param }}</label>
+        <input type="text" name="{{ param }}" id="{{ param }}" 
+class="form-control">
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Execute</button>
+</form>
+{% else %}
+<p>Invalid template selected.</p>
+{% endif %}
+
+{% if result %}
+<h3>Result:</h3>
+<pre class="bg-light p-3">{{ result }}</pre>
+{% endif %}
+
+<a href="/monitor" class="btn btn-secondary mt-3">Back to Devices</a>
+{% endblock %}
