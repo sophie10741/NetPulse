@@ -1,0 +1,30 @@
+<form id="scan-form" method="post" action="{% url 'start_scan' %}">
+    {% csrf_token %}
+    <div class="np-form-grid">
+        <div class="np-field np-field--wide">
+            <label for="start_ip">IP-адрес устройства, с которого начать</label>
+            <input type="text" id="start_ip" name="start_ip" placeholder="например, 10.20.0.2" required>
+            <div class="np-help">К этому устройству должен быть SSH-доступ.</div>
+        </div>
+        <div class="np-field">
+            <label for="server_type">Ключевые слова: сервер</label>
+            <input type="text" id="server_type" name="server_type" placeholder="srv, server" required>
+        </div>
+        <div class="np-field">
+            <label for="router_type">Ключевые слова: маршрутизатор</label>
+            <input type="text" id="router_type" name="router_type" placeholder="rtr, router" required>
+        </div>
+        <div class="np-field">
+            <label for="switch_type">Ключевые слова: коммутатор</label>
+            <input type="text" id="switch_type" name="switch_type" placeholder="sw, switch" required>
+        </div>
+        <div class="np-field">
+            <label for="client_type">Ключевые слова: клиент</label>
+            <input type="text" id="client_type" name="client_type" placeholder="cli, pc" required>
+        </div>
+    </div>
+    <div class="np-help">Тип устройства определяется по имени хоста: если в имени есть одно из слов, устройство получает этот тип. Слова разделяются запятой.</div>
+    <div class="np-actions">
+        <button type="submit">Отсканировать</button>
+    </div>
+</form>

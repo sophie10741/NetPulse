@@ -1,23 +1,29 @@
 {% extends "monitor/base.html" %}
 
-{% block title %}SSH Command{% endblock %}
+{% block title %}SSH-команда: {{ device.name }}{% endblock %}
 
 {% block content %}
-<h2>Execute SSH Command on {{ device.name }}</h2>
+<div class="np-page np-page--narrow">
+    <h2>SSH-команда: {{ device.name }}</h2>
+    <p class="np-muted">Адрес: {{ device.ip_address|default:"не определён" }}. Команда выполняется на устройстве от имени {{ device.ssh_username }}.</p>
 
-<form method="post">
-	{% csrf_token %}
-	<div class="mb-3">
-		<label for="command" class="form-label">Command</label>
-		<input type="text" name="command" id="command" class="form-control" placeholder="Enter command">
-	</div>
-	<button type="submit" class="btn btn-primary">Execute</button>
-</form>
+    <section class="np-card">
+        <form method="post">
+            {% csrf_token %}
+            <label for="command">Команда</label>
+            <input type="text" name="command" id="command" placeholder="например, hostname" autofocus required>
+            <div class="np-actions">
+                <button type="submit">Выполнить</button>
+                <a class="np-btn np-btn-secondary" href="{% url 'home' %}">К устройствам</a>
+            </div>
+        </form>
+    </section>
 
-{% if result %}
-<h3>Result:</h3>
-<pre class="bg-light p-3">{{ result }}</pre>
-{% endif %}
-
-<a href="/monitor/devices/" class="btn btn-secondary mt-3">Back to Devices</a>
+    {% if result %}
+    <section class="np-card">
+        <h3>Результат</h3>
+        <pre class="np-result">{{ result }}</pre>
+    </section>
+    {% endif %}
+</div>
 {% endblock %}

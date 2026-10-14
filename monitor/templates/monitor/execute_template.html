@@ -1,39 +1,52 @@
 {% extends "monitor/base.html" %}
 
-{% block title %}Execute Template{% endblock %}
+{% block title %}{{ template.description|default:"Шаблон команды" }}{% endblock %}
 
 {% block content %}
-<h2>Execute Template: {{ template_name }} on {{ device.name }}</h2>
+<div class="np-page np-page--narrow">
+    {% if template %}
+    <h2>{{ template.description }}</h2>
+    <p class="np-muted">Устройство: {{ device.name }} ({{ device.ip_address|default:"IP не определён" }})</p>
 
-{% if template %}
-<form method="post">
-    {% csrf_token %}
-    <p>{{ template.description }}</p>
     {% if errors %}
-    <ul class="errors">
-        {% for name, message in errors.items %}
-        <li>{{ name }}: {{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% for param in parameters %}
-    <div class="mb-3">
-        <label for="{{ param }}" class="form-label">{{ param }}</label>
-        <input type="text" name="{{ param }}" id="{{ param }}" 
-class="form-control">
+    <div class="np-message np-message--error">
+        <strong>Проверьте значения:</strong>
+        <ul>
+            {% for name, message in errors.items %}
+            <li>{{ name }}: {{ message }}</li>
+            {% endfor %}
+        </ul>
     </div>
-    {% endfor %}
+    {% endif %}
 
-    <button type="submit" class="btn btn-primary">Execute</button>
-</form>
-{% else %}
-<p>Invalid template selected.</p>
-{% endif %}
+    <section class="np-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="np-form-grid">
+                {% for field in fields %}
+                <div class="np-field">
+                    <label for="{{ field.name }}">{{ field.name }}</label>
+                    <input type="{{ field.type }}" name="{{ field.name }}" id="{{ field.name }}" value="{{ field.value }}" placeholder="{{ field.hint }}" required>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="np-actions">
+                <button type="submit">Выполнить</button>
+                <a class="np-btn np-btn-secondary" href="{% url 'home' %}">К устройствам</a>
+            </div>
+        </form>
+    </section>
+    {% else %}
+    <h2>Шаблон команды</h2>
+    <div class="np-message np-message--error">Неизвестный шаблон команды.</div>
+    <a class="np-btn np-btn-secondary" href="{% url 'home' %}">К устройствам</a>
+    {% endif %}
 
-{% if result %}
-<h3>Result:</h3>
-<pre class="bg-light p-3">{{ result }}</pre>
-{% endif %}
-
-<a href="/monitor" class="btn btn-secondary mt-3">Back to Devices</a>
+    {% if result %}
+    <section class="np-card">
+        <h3>Результат</h3>
+        <pre class="np-result">{{ result }}</pre>
+    </section>
+    {% endif %}
+</div>
 {% endblock %}

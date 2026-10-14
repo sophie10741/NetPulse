@@ -3,7 +3,7 @@ from .models import NetworkDevice, Connection, NetworkInterface
 from .forms import DeviceFilterForm
 from .ssh_manager import execute_ssh_command
 from .command_templates import command_templates
-from .command_builder import build_command, extract_parameters
+from .command_builder import build_command, extract_parameters, PARAMETER_HINTS
 from django.http import JsonResponse
 from .network_scanner_1 import scan_full_network, determine_device_type
 import ipaddress
@@ -79,7 +79,7 @@ def network_topology_view(request):
 
 @login_required
 def home(request):
-    devices = NetworkDevice.objects.all()
+    devices = NetworkDevice.objects.prefetch_related("networkinterface_set")
     form = DeviceFilterForm(request.GET)
 
     if form.is_valid():
@@ -92,14 +92,15 @@ def home(request):
         if device_type:
             devices = devices.filter(device_type=device_type)
         if status:
-            devices = devices.filter(status=status)  # Теперь фильтруем по полю
+            devices = devices.filter(status=status)
 
-    topology_data = get_topology_data(devices) if devices else None
-
+    has_devices = NetworkDevice.objects.exists()
     context = {
         "devices": devices,
+        "has_devices": has_devices,
         "form": form,
-        "topology_data": topology_data if devices else None
+        # Схема всегда строится по всем устройствам, фильтр действует только на таблицу
+        "topology_data": get_topology_data() if has_devices else None,
     }
     return render(request, 'monitor/home.html', context)
 
@@ -179,14 +180,31 @@ def execute_template_view(request, pk):
                 username=device.ssh_username,
                 command=command,
             )
+
+    fields = [
+        {
+            "name": name,
+            "hint": PARAMETER_HINTS.get(name, ""),
+            "type": "password" if name == "password" else "text",
+            # пароль обратно в форму не подставляем
+            "value": "" if name == "password" else request.POST.get(name, ""),
+        }
+        for name in parameters
+    ]
     return render(request, "monitor/execute_template.html", {
         "device": device,
         "template_name": template_name,
         "template": template,
         "parameters": parameters,
+        "fields": fields,
         "errors": errors,
-        "result": result
+        "result": result,
     })
+
+def parse_keywords(value):
+    """' srv, sw ,' -> ['srv', 'sw']"""
+    return [word.strip() for word in value.split(",") if word.strip()]
+
 
 @login_required
 def start_scan(request):
@@ -195,13 +213,20 @@ def start_scan(request):
 
     if request.method == "POST":
         start_ip = request.POST.get("start_ip", "").strip()
-        server_type = request.POST.get("server_type", "").split(",")
-        router_type = request.POST.get("router_type", "").split(",")
-        switch_type = request.POST.get("switch_type", "").split(",")
-        client_type = request.POST.get("client_type", "").split(",")
+        server_type = parse_keywords(request.POST.get("server_type", ""))
+        router_type = parse_keywords(request.POST.get("router_type", ""))
+        switch_type = parse_keywords(request.POST.get("switch_type", ""))
+        client_type = parse_keywords(request.POST.get("client_type", ""))
 
         if not all([start_ip, server_type, router_type, switch_type, client_type]):
-            return JsonResponse({"status": "error", "message": "Заполните все поля!"})
+            messages.error(request, "Заполните все поля: IP-адрес и ключевые слова для каждого типа устройств.")
+            return redirect("home")
+
+        try:
+            ipaddress.ip_address(start_ip)
+        except ValueError:
+            messages.error(request, f"Некорректный IP-адрес: {start_ip}")
+            return redirect("home")
 
         # Запуск сканирования в отдельном потоке
         if not scan_in_progress:

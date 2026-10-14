@@ -1,24 +1,28 @@
 {% extends "monitor/base.html" %}
 
-{% block title %}Select Interface{% endblock %}
+{% block title %}Выбор интерфейса{% endblock %}
 
 {% block content %}
-<h2>Select Interface for {{ device.name }} - Action: {{ action }}</h2>
+<div class="np-page np-page--narrow">
+    <h2>Выбор интерфейса: {{ device.name }}</h2>
+    <p class="np-muted">Действие: {{ action }}</p>
 
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label for="interface" class="form-label">Select Interface</label>
-        <select name="interface" id="interface" class="form-control">
-            {% for interface in interfaces %}
-                <option value="{{ interface.id }}">{{ interface.interface_name }} ({{ interface.ip_address }})</option>
-            {% empty %}
-                <option disabled>No interfaces available</option>
-            {% endfor %}
-        </select>
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
-
-<a href="/monitor" class="btn">Back to Topology</a>
+    <section class="np-card">
+        <form method="post">
+            {% csrf_token %}
+            <label for="interface">Интерфейс</label>
+            <select name="interface" id="interface">
+                {% for interface in interfaces %}
+                <option value="{{ interface.id }}">{{ interface.interface_name }} ({{ interface.ip_address|default_if_none:"без IP" }})</option>
+                {% empty %}
+                <option disabled>Интерфейсы не найдены</option>
+                {% endfor %}
+            </select>
+            <div class="np-actions">
+                <button type="submit">Продолжить</button>
+                <a class="np-btn np-btn-secondary" href="{% url 'home' %}">К устройствам</a>
+            </div>
+        </form>
+    </section>
+</div>
 {% endblock %}

@@ -1,0 +1,81 @@
+/* NetPulse: аккуратная раскладка и размеры элементов.
+   Подключается после styles.css. Палитра и тёмная тема остаются прежними,
+   правила действуют только внутри .np-page и не затрагивают навигацию и модальные окна. */
+
+.np-page { max-width: 1100px; margin: 0 auto; }
+.np-page--narrow { max-width: 720px; }
+.np-page h2 { margin: 0 0 6px; font-size: 1.5rem; }
+.np-page h3 { margin: 0 0 12px; font-size: 1.15rem; }
+.np-muted { opacity: 0.7; font-size: 0.9rem; margin: 0 0 14px; }
+.np-help { font-size: 0.82rem; opacity: 0.7; margin-top: 4px; }
+
+/* Карточки */
+.np-card { background: var(--bg-card); border: 1px solid var(--light-border); border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+body.dark .np-card { border-color: var(--dark-border); }
+.np-card--narrow { max-width: 640px; }
+.np-card-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.np-card-header h3 { margin-bottom: 8px; }
+.np-card-header .np-muted { margin-bottom: 8px; }
+
+/* Сворачиваемая форма пересканирования */
+.np-rescan summary { cursor: pointer; font-weight: 600; }
+.np-rescan[open] summary { margin-bottom: 10px; }
+
+/* Сообщения */
+.np-message { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; border: 1px solid transparent; }
+.np-message ul { margin: 6px 0 0; padding-left: 20px; }
+.np-message--error { background: #fdecea; border-color: #f5c2c0; color: #842029; }
+.np-message--success { background: #e8f5e9; border-color: #b7dfb9; color: #1e5b24; }
+.np-message--info, .np-message--warning { background: #e5f1fb; border-color: #b9d8f0; color: #0b4a7a; }
+
+/* Поля форм */
+.np-page label { display: block; margin: 0 0 4px; font-weight: 500; font-size: 0.9rem; }
+.np-page input[type="text"],
+.np-page input[type="password"],
+.np-page select { width: 100%; box-sizing: border-box; margin: 0; padding: 8px 10px; font-size: 0.95rem; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; color: var(--light-text); }
+.np-page input:focus, .np-page select:focus { border-color: var(--light-primary); outline: none; }
+body.dark .np-page input[type="text"],
+body.dark .np-page input[type="password"],
+body.dark .np-page select { background: var(--dark-accent); color: var(--dark-text); border-color: var(--dark-border); }
+.np-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 16px; margin-bottom: 8px; }
+.np-field--wide { grid-column: 1 / -1; }
+.np-filter { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 14px; }
+.np-filter .np-field { flex: 1 1 160px; min-width: 140px; }
+.np-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+
+/* Кнопки */
+.np-page button,
+.np-page .np-btn { display: inline-block; width: auto; margin: 0; padding: 8px 18px; font-size: 0.95rem; font-weight: 500; line-height: 1.4; border: 1px solid var(--accent); border-radius: 6px; background: var(--accent); color: #fff; text-decoration: none; cursor: pointer; transition: background var(--transition), color var(--transition); }
+.np-page button:hover,
+.np-page .np-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.np-page .np-btn-secondary { background: transparent; color: var(--accent); }
+.np-page .np-btn-secondary:hover { background: var(--light-accent); color: var(--accent-hover); border-color: var(--accent-hover); }
+body.dark .np-page .np-btn-secondary:hover { background: var(--dark-accent); }
+.np-page .np-btn-sm { padding: 3px 10px; font-size: 0.85rem; }
+
+/* Топология */
+.cy-wrapper { position: relative; }
+#cy { height: 420px; border: 1px solid var(--light-border); border-radius: 8px; background: #fff; }
+body.dark #cy { background: var(--dark-bg); border-color: var(--dark-border); }
+.np-page .legend-container { max-width: none; background: transparent; border: none; box-shadow: none; padding: 10px 0 0; margin: 0; }
+.context-menu { min-width: 200px; }
+.context-menu li.context-menu-title { font-weight: 600; cursor: default; opacity: 0.75; border-bottom: 1px solid var(--light-border); }
+.context-menu li.context-menu-title:hover { background: transparent; }
+
+/* Таблица устройств */
+.np-table-wrap { overflow-x: auto; }
+.np-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.np-table th, .np-table td { padding: 10px 12px; text-align: left; vertical-align: middle; border-bottom: 1px solid var(--light-border); }
+.np-table th { background: var(--light-accent); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.np-table tbody tr:hover { background: var(--light-accent); }
+body.dark .np-table th { background: var(--dark-accent); }
+body.dark .np-table td, body.dark .np-table th { border-color: var(--dark-border); }
+body.dark .np-table tbody tr:hover { background: var(--dark-accent); }
+.np-table .np-empty { text-align: center; opacity: 0.7; }
+.status { display: inline-flex; align-items: center; gap: 6px; }
+.status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #999; }
+.status--online::before { background: #28a745; }
+.status--offline::before { background: #dc3545; }
+
+/* Результат команды */
+.np-page pre.np-result { margin: 0; padding: 12px; background: var(--bg-result); border-radius: 6px; white-space: pre-wrap; word-break: break-word; overflow-x: auto; }

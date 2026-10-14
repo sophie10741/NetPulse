@@ -4,15 +4,23 @@ from django.contrib.auth.models import User
 
 
 class DeviceFilterForm(forms.Form):
-    name = forms.CharField(required=False, label="Name")
+    name = forms.CharField(required=False, label="Имя")
     device_type = forms.ChoiceField(
         required=False,
-        choices=[('', 'All')] + [('router', 'Router'), ('server', 'Server'), ('client', 'Client')],
-        label="Device Type"
+        label="Тип",
+        choices=[
+            ("", "Все"),
+            ("router", "Маршрутизатор"),
+            ("server", "Сервер"),
+            ("switch", "Коммутатор"),
+            ("client", "Клиент"),
+            ("unknown", "Неизвестный"),
+        ],
     )
     status = forms.ChoiceField(
         required=False,
-        choices=[('', 'All'), ('online', 'Online'), ('offline', 'Offline')],
+        label="Статус",
+        choices=[("", "Все"), ("online", "Online"), ("offline", "Offline")],
     )
 
 
