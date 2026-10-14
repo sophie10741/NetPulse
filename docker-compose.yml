@@ -1,0 +1,137 @@
+# Демо-стенд NetPulse: приложение и лабораторная сеть из шести Linux-узлов.
+# Запуск: docker compose up --build   →   http://localhost:8000
+#
+# Топология (каждая сеть Docker — отдельный L2-сегмент):
+#   wan     10.10.0.0/24: isp-rtr .2, hq-rtr .3, br-rtr .4
+#   hq-lan  10.20.0.0/24: hq-rtr .2, hq-srv .10, hq-cli .20
+#   br-lan  10.30.0.0/24: br-rtr .2, br-srv .10
+# Контейнер netpulse подключён ко всем сегментам (адреса .100) и ходит на узлы по SSH-ключу.
+
+x-node: &node
+  build: ./docker/node
+  init: true
+  restart: unless-stopped
+  cap_add:
+    - NET_ADMIN
+  volumes:
+    - ssh-keys:/keys:ro
+
+services:
+  netpulse:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Только для демо: разработческий режим и любой Host
+      DEBUG: "true"
+      ALLOWED_HOSTS: "*"
+      DB_PATH: /data/db.sqlite3
+      SSH_PRIVATE_KEY_PATH: /keys/id_ed25519
+      SSH_KNOWN_HOSTS_FILE: /tmp/known_hosts
+      NETPULSE_SSH_USER: root
+      NETPULSE_ADMIN_USER: ${NETPULSE_ADMIN_USER:-admin}
+      NETPULSE_ADMIN_PASSWORD: ${NETPULSE_ADMIN_PASSWORD:-}
+    volumes:
+      - ssh-keys:/keys
+      - app-data:/data
+    networks:
+      frontend: {}
+      wan:
+        ipv4_address: 10.10.0.100
+      hq-lan:
+        ipv4_address: 10.20.0.100
+      br-lan:
+        ipv4_address: 10.30.0.100
+
+  isp-rtr:
+    <<: *node
+    hostname: isp-rtr
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    environment:
+      ROUTES: "10.20.0.0/24 via 10.10.0.3;10.30.0.0/24 via 10.10.0.4"
+      PEERS: "10.10.0.3 10.10.0.4"
+    networks:
+      wan:
+        ipv4_address: 10.10.0.2
+
+  hq-rtr:
+    <<: *node
+    hostname: hq-rtr
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    environment:
+      ROUTES: "10.30.0.0/24 via 10.10.0.4"
+      PEERS: "10.10.0.2 10.10.0.4 10.20.0.10 10.20.0.20"
+    networks:
+      wan:
+        ipv4_address: 10.10.0.3
+      hq-lan:
+        ipv4_address: 10.20.0.2
+
+  br-rtr:
+    <<: *node
+    hostname: br-rtr
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    environment:
+      ROUTES: "10.20.0.0/24 via 10.10.0.3"
+      PEERS: "10.10.0.2 10.10.0.3 10.30.0.10"
+    networks:
+      wan:
+        ipv4_address: 10.10.0.4
+      br-lan:
+        ipv4_address: 10.30.0.2
+
+  hq-srv:
+    <<: *node
+    hostname: hq-srv
+    environment:
+      ROUTES: "default via 10.20.0.2"
+      PEERS: "10.20.0.2 10.20.0.20"
+    networks:
+      hq-lan:
+        ipv4_address: 10.20.0.10
+
+  hq-cli:
+    <<: *node
+    hostname: hq-cli
+    environment:
+      ROUTES: "default via 10.20.0.2"
+      PEERS: "10.20.0.2 10.20.0.10"
+    networks:
+      hq-lan:
+        ipv4_address: 10.20.0.20
+
+  br-srv:
+    <<: *node
+    hostname: br-srv
+    environment:
+      ROUTES: "default via 10.30.0.2"
+      PEERS: "10.30.0.2"
+    networks:
+      br-lan:
+        ipv4_address: 10.30.0.10
+
+networks:
+  frontend: {}
+  wan:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24
+  hq-lan:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24
+  br-lan:
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.30.0.0/24
+
+volumes:
+  ssh-keys:
+  app-data:

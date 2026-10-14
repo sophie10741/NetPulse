@@ -1,0 +1,9 @@
+.git
+.venv
+.idea
+__pycache__
+*.pyc
+*.sqlite3
+.env
+known_hosts
+docs

@@ -62,7 +62,7 @@ class ScannerParsingTests(SimpleTestCase):
 
     def test_arp_skips_incomplete_entries(self):
         client = FakeSshClient({
-            "arp -a": (
+            "arp -an": (
                 "router.lab (10.0.0.1) at 02:42:ac:11:00:03 [ether] on eth0\n"
                 "? (10.0.0.9) at <incomplete> on eth0\n"
             )
@@ -85,12 +85,12 @@ class ScannerFullScanTests(TestCase):
             "10.0.0.1": FakeSshClient({
                 "hostname": "hq-rtr\n",
                 "ip a": _ip_a("10.0.0.1", "02:00:00:00:00:01"),
-                "arp -a": "? (10.0.0.2) at 02:00:00:00:00:02 [ether] on eth0\n",
+                "arp -an": "? (10.0.0.2) at 02:00:00:00:00:02 [ether] on eth0\n",
             }),
             "10.0.0.2": FakeSshClient({
                 "hostname": "hq-srv\n",
                 "ip a": _ip_a("10.0.0.2", "02:00:00:00:00:02"),
-                "arp -a": "? (10.0.0.1) at 02:00:00:00:00:01 [ether] on eth0\n",
+                "arp -an": "? (10.0.0.1) at 02:00:00:00:00:01 [ether] on eth0\n",
             }),
         }
         with patch(

@@ -72,8 +72,8 @@ def get_arp_via_ssh(client):
     neighbors = []
 
     try:
-        output_arp = _run(client, "arp -a")
-        print(f"📋 Вывод arp -a:\n{output_arp}")
+        output_arp = _run(client, "arp -an")
+        print(f"📋 Вывод arp -an:\n{output_arp}")
 
         # Разбираем вывод arp -a
         for line in output_arp.split("\n"):
@@ -92,7 +92,7 @@ def get_arp_via_ssh(client):
                 })
 
     except Exception as e:
-        print(f"⚠️ Ошибка выполнения 'arp -a': {e}")
+        print(f"⚠️ Ошибка выполнения 'arp -an': {e}")
 
     return neighbors
 
