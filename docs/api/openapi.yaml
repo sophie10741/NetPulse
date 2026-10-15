@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: NetPulse HTTP API (текущая версия)
+  version: 0.3.0
+  description: |
+    Описание JSON-интерфейсов, которые уже есть в приложении. Остальные страницы возвращают HTML и здесь не описаны.
+
+    Аутентификация: сессия Django (cookie `sessionid`). Все запросы, изменяющие состояние, требуют CSRF-токен:
+    cookie `csrftoken` и заголовок `X-CSRFToken` (или поле формы `csrfmiddlewaretoken`).
+    Токенный REST API запланирован, см. `docs/09-api.md`.
+servers:
+  - url: http://localhost:8000
+    description: Docker-стенд или локальный запуск
+tags:
+  - name: auth
+    description: Вход и завершение регистрации
+  - name: topology
+    description: Данные схемы сети
+  - name: scan
+    description: Сканирование сети
+paths:
+  /login/:
+    post:
+      tags: [auth]
+      summary: Вход по логину и паролю
+      description: При успехе создаёт сессию. Метод GET перенаправляет на страницу входа.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: {type: string}
+                password: {type: string, format: password}
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResult'
+              examples:
+                ok:
+                  value: {success: true}
+                fail:
+                  value: {success: false, error: Неверные данные}
+        '403':
+          description: Нет или неверен CSRF-токен
+  /validate_user/:
+    post:
+      tags: [auth]
+      summary: Проверка выданных учётных данных (шаг 1 завершения регистрации)
+      description: При успехе сохраняет имя пользователя в сессии, но не выполняет вход.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: {type: string}
+                password: {type: string, format: password}
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResult'
+  /complete_registration/:
+    post:
+      tags: [auth]
+      summary: Завершение регистрации (шаг 2)
+      description: Требует предварительного успешного вызова `/validate_user/` в той же сессии.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [new_password, confirm_password, email, phone]
+              properties:
+                new_password: {type: string, format: password}
+                confirm_password: {type: string, format: password}
+                email: {type: string, format: email}
+                phone: {type: string}
+      responses:
+        '200':
+          description: Результат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResult'
+              examples:
+                mismatch:
+                  value: {success: false, error: Пароли не совпадают}
+  /logout/:
+    get:
+      tags: [auth]
+      summary: Выход из системы
+      responses:
+        '302':
+          description: Перенаправление на страницу входа
+  /api/network_topology/:
+    get:
+      tags: [topology]
+      summary: Данные схемы сети
+      description: Устройства (узлы) и связи (рёбра) в формате Cytoscape.js. Всегда содержит все устройства.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Топология
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Topology'
+              example:
+                nodes:
+                  - data: {id: '1', label: hq-rtr, color: red, device_type: router}
+                  - data: {id: '2', label: hq-srv, color: blue, device_type: server}
+                edges:
+                  - data: {source: '1', target: '2'}
+        '302':
+          description: Пользователь не вошёл, перенаправление на страницу входа
+  /scan/start/:
+    post:
+      tags: [scan]
+      summary: Запуск сканирования
+      description: |
+        Проверяет данные и запускает обход в фоновом потоке. Ответ всегда перенаправление:
+        на `/scan/progress/` при запуске, на `/` при ошибке ввода (сообщение в сессии) или если сканирование уже идёт.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [start_ip, server_type, router_type, switch_type, client_type]
+              properties:
+                start_ip:
+                  type: string
+                  description: IP-адрес стартового устройства
+                  example: 10.20.0.2
+                server_type:
+                  type: string
+                  description: Ключевые слова для серверов, через запятую
+                  example: srv, server
+                router_type:
+                  type: string
+                  example: rtr, router
+                switch_type:
+                  type: string
+                  example: sw, switch
+                client_type:
+                  type: string
+                  example: cli, pc
+      responses:
+        '302':
+          description: Перенаправление (см. описание)
+          headers:
+            Location:
+              schema: {type: string}
+              example: /scan/progress/
+  /scan/status/:
+    get:
+      tags: [scan]
+      summary: Состояние сканирования
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Идёт ли сканирование
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scan_in_progress: {type: boolean}
+              example: {scan_in_progress: false}
+        '302':
+          description: Пользователь не вошёл
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+  schemas:
+    SuccessResult:
+      type: object
+      required: [success]
+      properties:
+        success: {type: boolean}
+        error: {type: string, description: Причина отказа, если success равно false}
+    Topology:
+      type: object
+      required: [nodes, edges]
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  id: {type: string}
+                  label: {type: string, description: Имя хоста}
+                  color: {type: string, enum: [blue, red, green, orange, gray]}
+                  device_type: {type: string, enum: [router, server, switch, client, unknown]}
+        edges:
+          type: array
+          items:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  source: {type: string}
+                  target: {type: string}

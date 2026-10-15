@@ -1,0 +1,208 @@
+{
+  "info": {
+    "name": "NetPulse (текущий API)",
+    "description": "Коллекция для ручной проверки. Порядок: CSRF-cookie, вход, затем остальные запросы.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "username",
+      "value": "admin"
+    },
+    {
+      "key": "password",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Получить CSRF-cookie",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/access-denied/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('страница входа открыта', function () { pm.response.to.have.status(200); });",
+              "pm.test('получена cookie csrftoken', function () { pm.expect(pm.cookies.get('csrftoken')).to.be.a('string'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Вход",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Referer",
+            "value": "{{baseUrl}}/access-denied/"
+          }
+        ],
+        "url": "{{baseUrl}}/login/",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            },
+            {
+              "key": "password",
+              "value": "{{password}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.request.headers.upsert({ key: 'X-CSRFToken', value: pm.cookies.get('csrftoken') });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('вход выполнен', function () { pm.expect(pm.response.json().success).to.eql(true); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Топология сети",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/network_topology/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('код 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('есть узлы и рёбра', function () { const d = pm.response.json(); pm.expect(d).to.have.property('nodes'); pm.expect(d).to.have.property('edges'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Состояние сканирования",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/scan/status/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('поле scan_in_progress', function () { pm.expect(pm.response.json()).to.have.property('scan_in_progress'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Запуск сканирования",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Referer",
+            "value": "{{baseUrl}}/"
+          }
+        ],
+        "url": "{{baseUrl}}/scan/start/",
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "start_ip",
+              "value": "10.20.0.2"
+            },
+            {
+              "key": "server_type",
+              "value": "srv"
+            },
+            {
+              "key": "router_type",
+              "value": "rtr"
+            },
+            {
+              "key": "switch_type",
+              "value": "sw"
+            },
+            {
+              "key": "client_type",
+              "value": "cli"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.request.headers.upsert({ key: 'X-CSRFToken', value: pm.cookies.get('csrftoken') });"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('перенаправление', function () { pm.expect(pm.response.code).to.eql(302); });"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "followRedirects": false
+      }
+    },
+    {
+      "name": "6. Выход",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/logout/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('перенаправление на вход', function () { pm.expect(pm.response.code).to.be.oneOf([200, 302]); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
