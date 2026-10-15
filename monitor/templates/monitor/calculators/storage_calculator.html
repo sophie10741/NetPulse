@@ -3,31 +3,41 @@
 {% block title %}Калькулятор памяти и дисков{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Калькулятор памяти и дисков</h1>
+<div class="np-page np-page--narrow">
+    <h2>Калькулятор памяти и дисков</h2>
 
-<form method="post" class="bg-white p-4 shadow-md rounded-lg">
-    {% csrf_token %}
-    
-    <label class="block mb-2">Количество пользователей:</label>
-    <input type="number" name="users" class="w-full p-2 border rounded-md" required>
+    <section class="np-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="np-form-grid">
+                <div class="np-field np-field--wide">
+                    <label for="users">Количество пользователей</label>
+                    <input type="number" id="users" name="users" min="1" required>
+                </div>
+                <div class="np-field">
+                    <label for="ram_per_user">На пользователя: RAM, ГБ</label>
+                    <input type="number" id="ram_per_user" name="ram_per_user" step="0.1" min="0" required>
+                </div>
+                <div class="np-field">
+                    <label for="disk_per_user">На пользователя: диск, ГБ</label>
+                    <input type="number" id="disk_per_user" name="disk_per_user" step="0.1" min="0" required>
+                </div>
+            </div>
+            <div class="np-actions">
+                <button type="submit">Рассчитать</button>
+                <a class="np-btn np-btn-secondary" href="{% url 'calculators' %}">К калькуляторам</a>
+            </div>
+        </form>
+    </section>
 
-    <label class="block mt-3 mb-2">Средняя нагрузка на 1 пользователя (RAM в ГБ):</label>
-    <input type="number" step="0.1" name="ram_per_user" class="w-full p-2 border rounded-md" required>
-
-    <label class="block mt-3 mb-2">Средняя нагрузка на 1 пользователя (Диски в ГБ):</label>
-    <input type="number" step="0.1" name="disk_per_user" class="w-full p-2 border rounded-md" required>
-
-    <button type="submit" class="mt-3 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-        Рассчитать
-    </button>
-</form>
-
-{% if result %}
-<div class="mt-4 p-4 bg-gray-100 rounded-md">
-    <h2 class="text-xl font-semibold">Результаты:</h2>
-    <p><strong>Требуемое количество памяти (в ГБ):</strong> {{ result.total_ram }}</p>
-    <p><strong>Требуемый объем дисков (в ГБ):</strong> {{ result.total_disk }}</p>
+    {% if result.error %}
+    <div class="np-message np-message--error">{{ result.error }}</div>
+    {% elif result %}
+    <section class="np-card">
+        <h3>Результаты</h3>
+        <p><strong>Требуемое количество памяти (в ГБ):</strong> {{ result.total_ram }}</p>
+        <p><strong>Требуемый объём дисков (в ГБ):</strong> {{ result.total_disk }}</p>
+    </section>
+    {% endif %}
 </div>
-{% endif %}
-
 {% endblock %}

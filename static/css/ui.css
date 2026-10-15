@@ -79,3 +79,41 @@ body.dark .np-table tbody tr:hover { background: var(--dark-accent); }
 
 /* Результат команды */
 .np-page pre.np-result { margin: 0; padding: 12px; background: var(--bg-result); border-radius: 6px; white-space: pre-wrap; word-break: break-word; overflow-x: auto; }
+
+/* ===== Страницы «Заметки», «Полезности», «Калькуляторы» ===== */
+/* Ссылки внутри страниц без подчёркивания, цвета берутся из переменных темы */
+.np-page a.np-link { color: var(--accent); text-decoration: none; }
+.np-page a.np-link:hover { text-decoration: underline; }
+.np-page textarea { width: 100%; box-sizing: border-box; margin: 0; padding: 8px 10px; font-family: inherit; font-size: 0.95rem; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; color: var(--light-text); resize: vertical; }
+.np-page textarea:focus { border-color: var(--light-primary); outline: none; }
+body.dark .np-page textarea { background: var(--dark-accent); color: var(--dark-text); border-color: var(--dark-border); }
+.np-page input[type="number"] { width: 100%; box-sizing: border-box; margin: 0; padding: 8px 10px; font-size: 0.95rem; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; color: var(--light-text); }
+body.dark .np-page input[type="number"] { background: var(--dark-accent); color: var(--dark-text); border-color: var(--dark-border); }
+.np-page .np-btn-danger { background: #dc3545; border-color: #dc3545; }
+.np-page .np-btn-danger:hover { background: #b02a37; border-color: #b02a37; }
+.np-page form.np-inline { display: inline; margin: 0; padding: 0; }
+.np-error { color: #dc3545; font-size: 0.85rem; margin-top: 4px; }
+.np-field { margin-bottom: 12px; }
+.np-text p { margin: 0 0 10px; line-height: 1.6; }
+.np-comment { background: var(--bg-card); border: 1px solid var(--border-color); border-left: 4px solid var(--accent); border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; }
+.np-comment p { margin: 0 0 6px; }
+
+/* Список категорий */
+.np-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.np-tab { padding: 6px 14px; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+.np-tab:hover { background: var(--light-accent); }
+body.dark .np-tab:hover { background: var(--dark-accent); }
+.np-tab--active, .np-tab--active:hover { background: var(--accent); color: #fff; }
+
+/* Плитки калькуляторов */
+.np-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.np-tile { display: block; padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; box-shadow: var(--shadow); color: inherit; text-decoration: none; transition: transform 0.15s, background 0.15s; }
+.np-tile:hover { background: var(--bg-card-hover); transform: translateY(-2px); text-decoration: none; }
+.np-tile h3 { margin: 0 0 6px; color: var(--accent); }
+.np-tile p { margin: 0; opacity: 0.8; font-size: 0.92rem; }
+
+/* Пагинация */
+.np-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; margin: 8px 0 20px; }
+
+/* Моноширинный текст для команд */
+.np-page pre.np-result { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88rem; }

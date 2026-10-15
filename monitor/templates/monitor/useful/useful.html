@@ -3,54 +3,27 @@
 {% block title %}Полезности{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Полезности</h1>
+<div class="np-page">
+    <h2>Полезности</h2>
+    <p class="np-muted">Справочник команд, таблиц и чек-листов для администратора.</p>
 
-<div class="mb-4">
-    <h2 class="text-xl font-semibold">Категории:</h2>
-    <ul class="category-list">
-    <li>
-        <a href="{% url 'useful' %}" class="{% if not selected_category %}active-category{% endif %}">
-            Все
-        </a>
-    </li>
-    {% for category in categories %}
-        <li>
-            <a href="{% url 'useful' %}?category={{ category.id }}"
-               class="{% if selected_category == category.id %}active-category{% endif %}">
-                {{ category.name }}
-            </a>
-        </li>
-    {% endfor %}
-</ul>
-
-{% if utilities %}
-    <div>
-        {% for utility in utilities %}
-            <div class="utility-card">
-                <h3>{{ utility.title }}</h3>
-                <p>{{ utility.description }}</p>
-                <a href="{% url 'useful_detail' utility.id %}">Читать далее</a>
-            </div>
+    <nav class="np-tabs">
+        <a class="np-tab{% if not selected_category %} np-tab--active{% endif %}" href="{% url 'useful' %}">Все</a>
+        {% for category in categories %}
+        <a class="np-tab{% if selected_category == category.id %} np-tab--active{% endif %}" href="{% url 'useful' %}?category={{ category.id }}">{{ category.name }}</a>
         {% endfor %}
-    </div>
-{% else %}
-    <p class="text-gray-500">Нет полезностей в этой категории.</p>
-{% endif %}
+    </nav>
 
-<div class="pagination">
-    <span class="step-links">
-        {% if utilities.has_previous %}
-            <a href="?page=1" class="pagination-link">&laquo; Первая</a>
-            <a href="?page={{ utilities.previous_page_number }}" class="pagination-link">Предыдущая</a>
-        {% endif %}
+    {% for utility in utilities %}
+    <article class="np-card">
+        <h3><a class="np-link" href="{% url 'useful_detail' utility.id %}">{{ utility.title }}</a></h3>
+        <p>{{ utility.description }}</p>
+        <p class="np-muted">{{ utility.category.name }}</p>
+    </article>
+    {% empty %}
+    <div class="np-card"><p class="np-muted">В этой категории пока ничего нет.</p></div>
+    {% endfor %}
 
-        <span class="current">Страница {{ utilities.number }} из {{ utilities.paginator.num_pages }}</span>
-
-        {% if utilities.has_next %}
-            <a href="?page={{ utilities.next_page_number }}" class="pagination-link">Следующая</a>
-            <a href="?page={{ utilities.paginator.num_pages }}" class="pagination-link">Последняя &raquo;</a>
-        {% endif %}
-    </span>
+    {% include "monitor/includes/pagination.html" with page=utilities category=selected_category %}
 </div>
-
 {% endblock %}

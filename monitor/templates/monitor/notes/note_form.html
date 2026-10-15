@@ -1,22 +1,26 @@
 {% extends "monitor/base.html" %}
 
-{% block title %}
-    {% if note %}Редактировать заметку{% else %}Создать заметку{% endif %}
-{% endblock %}
+{% block title %}{% if form.instance.pk %}Редактировать заметку{% else %}Создать заметку{% endif %}{% endblock %}
 
 {% block content %}
-<h1 class="page-title">
-    {% if note %}Редактировать заметку{% else %}Создать заметку{% endif %}
-</h1>
+<div class="np-page np-page--narrow">
+    <h2>{% if form.instance.pk %}Редактировать заметку{% else %}Создать заметку{% endif %}</h2>
 
-<form method="post" class="bg-white p-4 shadow-md rounded-lg">
-    {% csrf_token %}
-    {{ form.as_p }}
-
-    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
-        {% if note %}Сохранить{% else %}Добавить{% endif %}
-    </button>
-</form>
-
-<a href="{% url 'notes_list' %}" class="block mt-4 text-blue-500 hover:underline">Вернуться к списку</a>
+    <section class="np-card">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="np-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% for error in field.errors %}<div class="np-error">{{ error }}</div>{% endfor %}
+            </div>
+            {% endfor %}
+            <div class="np-actions">
+                <button type="submit">{% if form.instance.pk %}Сохранить{% else %}Добавить{% endif %}</button>
+                <a class="np-btn np-btn-secondary" href="{% url 'notes_list' %}">К списку</a>
+            </div>
+        </form>
+    </section>
+</div>
 {% endblock %}

@@ -3,27 +3,43 @@
 {% block title %}{{ note.title }}{% endblock %}
 
 {% block content %}
-<div class="note-card">
-    <h1 class="note-title">{{ note.title }}</h1>
-    <p>{{ note.content }}</p>
-    <p class="note-meta">Автор: {{ note.author }} | {{ note.created_at }}</p>
+<div class="np-page np-page--narrow">
+    <article class="np-card">
+        <h2>{{ note.title }}</h2>
+        <div class="np-text">{{ note.content|linebreaks }}</div>
+        <p class="np-muted">Автор: {{ note.author }} · {{ note.created_at|date:"d.m.Y H:i" }}</p>
 
-    <a href="{% url 'edit_note' note.pk %}" class="note-button edit">Редактировать</a>
-    <a href="{% url 'delete_note' note.pk %}" class="note-button delete">Удалить</a>
-</div>
+        <div class="np-actions">
+            {% if user == note.author %}
+            <a class="np-btn" href="{% url 'edit_note' note.pk %}">Редактировать</a>
+            <form class="np-inline" method="post" action="{% url 'delete_note' note.pk %}" onsubmit="return confirm('Удалить заметку?');">
+                {% csrf_token %}
+                <button type="submit" class="np-btn-danger">Удалить</button>
+            </form>
+            {% endif %}
+            <a class="np-btn np-btn-secondary" href="{% url 'notes_list' %}">К списку</a>
+        </div>
+    </article>
 
-<h3 class="text-lg mt-6">Комментарии</h3>
-{% for comment in comments %}
-    <div class="comment-box">
-        <p>{{ comment.content }}</p>
-        <small>— {{ comment.author }}, {{ comment.created_at }}</small>
+    <h3>Комментарии</h3>
+    {% for comment in comments %}
+    <div class="np-comment">
+        <p>{{ comment.content|linebreaksbr }}</p>
+        <small class="np-muted">— {{ comment.author }}, {{ comment.created_at|date:"d.m.Y H:i" }}</small>
     </div>
-{% endfor %}
+    {% empty %}
+    <p class="np-muted">Комментариев пока нет.</p>
+    {% endfor %}
 
-<h3 class="text-lg mt-6">Добавить комментарий</h3>
-<form method="post">
-    {% csrf_token %}
-    {{ comment_form.as_p }}
-    <button type="submit" class="note-button edit">Добавить</button>
-</form>
+    <section class="np-card">
+        <h3>Добавить комментарий</h3>
+        <form method="post">
+            {% csrf_token %}
+            {{ comment_form.content }}
+            <div class="np-actions">
+                <button type="submit">Добавить</button>
+            </div>
+        </form>
+    </section>
+</div>
 {% endblock %}

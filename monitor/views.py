@@ -265,9 +265,10 @@ def useful(request):
     categories = Category.objects.all()
 
     if category_id:
-        utilities = Utility.objects.filter(category_id=category_id)
+        utilities = Utility.objects.select_related("category").filter(category_id=category_id).order_by(
+            "category__name", "title")
     else:
-        utilities = Utility.objects.all()
+        utilities = Utility.objects.select_related("category").order_by("category__name", "title")
 
     paginator = Paginator(utilities, 5)  # 5 полезностей на странице
     page_number = request.GET.get('page')
@@ -279,9 +280,10 @@ def useful(request):
         'selected_category': int(category_id) if category_id else None,
     })
 
+
 @login_required
 def useful_detail(request, utility_id):
-    utility = Utility.objects.get(id=utility_id)
+    utility = get_object_or_404(Utility.objects.select_related("category"), id=utility_id)
     return render(request, 'monitor/useful/useful_detail.html', {'utility': utility})
 
 @login_required
@@ -296,12 +298,18 @@ def subnet_calculator(request):
         ip_input = request.POST.get("ip")
         try:
             network = ipaddress.ip_network(ip_input, strict=False)
+            if network.prefixlen >= network.max_prefixlen - 1:  # сети /31 и /32 (IPv4)
+                first, last = network.network_address, network.broadcast_address
+                hosts = network.num_addresses
+            else:
+                first, last = network.network_address + 1, network.broadcast_address - 1
+                hosts = network.num_addresses - 2
             result = {
                 "network_address": str(network.network_address),
                 "broadcast_address": str(network.broadcast_address),
                 "netmask": str(network.netmask),
-                "num_hosts": network.num_addresses - 2,  # Вычитаем сеть и broadcast
-                "ip_range": f"{network.network_address + 1} - {network.broadcast_address - 1}"
+                "num_hosts": hosts,
+                "ip_range": f"{first} - {last}",
             }
         except ValueError:
             result = {"error": "Неверный IP-адрес или маска!"}
@@ -334,7 +342,7 @@ def server_calculator(request):
                 "servers_by_ram": servers_by_ram,
                 "total_servers": total_servers
             }
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, ZeroDivisionError):
             result = {"error": "Ошибка ввода данных!"}
 
     return render(request, "monitor/calculators/server_calculator.html", {"result": result})
@@ -429,7 +437,7 @@ def edit_note(request, pk):
 @login_required
 def delete_note(request, pk):
     note = get_object_or_404(Note, pk=pk)
-    if request.user == note.author:
+    if request.method == "POST" and request.user == note.author:
         note.delete()
     return redirect('notes_list')
 

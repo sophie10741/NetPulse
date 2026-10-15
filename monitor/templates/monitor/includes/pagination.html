@@ -1,0 +1,11 @@
+{% if page.paginator.num_pages > 1 %}
+<nav class="np-pagination">
+    {% if page.has_previous %}
+    <a class="np-btn np-btn-secondary np-btn-sm" href="?page={{ page.previous_page_number }}{% if category %}&category={{ category }}{% endif %}">← Назад</a>
+    {% endif %}
+    <span class="np-muted">Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a class="np-btn np-btn-secondary np-btn-sm" href="?page={{ page.next_page_number }}{% if category %}&category={{ category }}{% endif %}">Вперёд →</a>
+    {% endif %}
+</nav>
+{% endif %}

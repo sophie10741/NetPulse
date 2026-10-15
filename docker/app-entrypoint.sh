@@ -15,5 +15,6 @@ chmod 600 /keys/id_ed25519
 
 python manage.py migrate --noinput
 python manage.py create_demo_admin
+python manage.py seed_demo_content
 
 exec "$@"

@@ -3,9 +3,15 @@
 {% block title %}{{ utility.title }}{% endblock %}
 
 {% block content %}
-<div class="utility-detail">
-    <h1>{{ utility.title }}</h1>
-    <p>{{ utility.content }}</p>
-    <a href="{% url 'useful' %}" class="utility-back">Назад</a>
+<div class="np-page np-page--narrow">
+    <article class="np-card">
+        <h2>{{ utility.title }}</h2>
+        <p class="np-muted">{{ utility.category.name }}</p>
+        <p>{{ utility.description }}</p>
+        <pre class="np-result">{{ utility.content }}</pre>
+        <div class="np-actions">
+            <a class="np-btn np-btn-secondary" href="{% url 'useful' %}">Назад</a>
+        </div>
+    </article>
 </div>
 {% endblock %}
