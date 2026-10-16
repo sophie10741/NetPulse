@@ -7,7 +7,7 @@ info:
 
     Аутентификация: сессия Django (cookie `sessionid`). Все запросы, изменяющие состояние, требуют CSRF-токен:
     cookie `csrftoken` и заголовок `X-CSRFToken` (или поле формы `csrfmiddlewaretoken`).
-    Токенный REST API запланирован, см. `docs/09-api.md`.
+    Токенный REST API запланирован, см. `docs/07-api.md`.
 servers:
   - url: http://localhost:8000
     description: Docker-стенд или локальный запуск

@@ -25,28 +25,28 @@
     </bpmn:laneSet>
     <bpmn:startEvent id="Start_1" name="Устройство выбрано на схеме" />
     <bpmn:userTask id="Task_Choose" name="Выбрать шаблон команды в меню устройства">
-      <bpmn:documentation>FR-30, US-20</bpmn:documentation>
+      <bpmn:documentation>FR-13, US-9</bpmn:documentation>
     </bpmn:userTask>
     <bpmn:task id="Task_Form" name="Показать форму с подсказками">
-      <bpmn:documentation>FR-30, FR-31</bpmn:documentation>
+      <bpmn:documentation>FR-13, FR-14</bpmn:documentation>
     </bpmn:task>
     <bpmn:userTask id="Task_Fill" name="Заполнить параметры">
-      <bpmn:documentation>US-20, US-22</bpmn:documentation>
+      <bpmn:documentation>US-9</bpmn:documentation>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gw_Valid" name="Параметры верны?">
-      <bpmn:documentation>FR-31, NFR-02</bpmn:documentation>
+      <bpmn:documentation>FR-14, NFR-2</bpmn:documentation>
     </bpmn:exclusiveGateway>
     <bpmn:task id="Task_Preview" name="Показать итоговую команду и пояснение">
-      <bpmn:documentation>FR-36 (запланировано)</bpmn:documentation>
+      <bpmn:documentation>FR-17 (запланировано)</bpmn:documentation>
     </bpmn:task>
     <bpmn:userTask id="Task_Confirm" name="Подтвердить выполнение">
-      <bpmn:documentation>FR-36, US-21 (запланировано)</bpmn:documentation>
+      <bpmn:documentation>FR-17, US-10 (запланировано)</bpmn:documentation>
     </bpmn:userTask>
     <bpmn:serviceTask id="Task_Run" name="Выполнить команду по SSH">
-      <bpmn:documentation>FR-33</bpmn:documentation>
+      <bpmn:documentation>FR-15</bpmn:documentation>
     </bpmn:serviceTask>
     <bpmn:task id="Task_Result" name="Показать результат выполнения">
-      <bpmn:documentation>FR-33</bpmn:documentation>
+      <bpmn:documentation>FR-15</bpmn:documentation>
     </bpmn:task>
     <bpmn:endEvent id="End_OK" name="Настройка выполнена" />
     <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Task_Choose" />

@@ -26,29 +26,29 @@
     </bpmn:laneSet>
     <bpmn:startEvent id="Start_1" name="Нужна схема сети" />
     <bpmn:userTask id="Task_Input" name="Указать IP стартового устройства и ключевые слова">
-      <bpmn:documentation>FR-10, US-10</bpmn:documentation>
+      <bpmn:documentation>FR-5, US-4</bpmn:documentation>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gw_Valid" name="Ввод корректен?">
-      <bpmn:documentation>FR-10</bpmn:documentation>
+      <bpmn:documentation>FR-5</bpmn:documentation>
     </bpmn:exclusiveGateway>
     <bpmn:task id="Task_InputError" name="Показать ошибку ввода">
-      <bpmn:documentation>FR-10</bpmn:documentation>
+      <bpmn:documentation>FR-5</bpmn:documentation>
     </bpmn:task>
     <bpmn:serviceTask id="Task_Scan" name="Обойти сеть по SSH и сохранить результат">
-      <bpmn:documentation>FR-11, FR-12</bpmn:documentation>
+      <bpmn:documentation>FR-6, FR-7</bpmn:documentation>
     </bpmn:serviceTask>
     <bpmn:exclusiveGateway id="Gw_Found" name="Устройства найдены?">
-      <bpmn:documentation>FR-11</bpmn:documentation>
+      <bpmn:documentation>FR-6</bpmn:documentation>
     </bpmn:exclusiveGateway>
     <bpmn:task id="Task_Reason" name="Показать причину пустого результата">
-      <bpmn:documentation>FR-15 (запланировано)</bpmn:documentation>
+      <bpmn:documentation>FR-9 (запланировано)</bpmn:documentation>
     </bpmn:task>
     <bpmn:endEvent id="End_Fail" name="Схема не получена" />
     <bpmn:task id="Task_Show" name="Показать схему и таблицу устройств">
-      <bpmn:documentation>FR-17, FR-18</bpmn:documentation>
+      <bpmn:documentation>FR-10, FR-11</bpmn:documentation>
     </bpmn:task>
     <bpmn:userTask id="Task_View" name="Просмотреть схему и список устройств">
-      <bpmn:documentation>US-10, US-13</bpmn:documentation>
+      <bpmn:documentation>US-4, US-7</bpmn:documentation>
     </bpmn:userTask>
     <bpmn:endEvent id="End_OK" name="Сеть отображена" />
     <bpmn:sequenceFlow id="Flow_1" sourceRef="Start_1" targetRef="Task_Input" />
