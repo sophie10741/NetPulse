@@ -41,7 +41,7 @@ command_templates.update({
 
 	"set_ssh_banner": {
 		"description": "Set SSH Banner",
-		"command": "echo '{banner}' > /etc/issue && sed -i 's/#Banner none/Banner \/etc\/issue/' /etc/ssh/sshd_config && systemctl restart sshd"
+		"command": "echo '{banner}' > /etc/issue && sed -i 's|#Banner none|Banner /etc/issue|' /etc/ssh/sshd_config && systemctl restart sshd"
 	},
 
 	"create_gre_tunnel": {
